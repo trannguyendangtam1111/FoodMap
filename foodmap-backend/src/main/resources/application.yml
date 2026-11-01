@@ -1,0 +1,183 @@
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  application:
+    name: foodmap-backend
+
+  # ── Database ──────────────────────────────────────────────
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      pool-name: FoodMapHikariPool
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 300000
+      connection-timeout: 20000
+      max-lifetime: 1200000
+
+  # ── Flyway ────────────────────────────────────────────────
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    # validate-on-migrate: Flyway checksums every applied migration file.
+    # If the file changes after it was applied, startup fails immediately.
+    # This catches accidental edits to committed migrations.
+    validate-on-migrate: true
+    # out-of-order: false means V3 cannot run before V2.
+    # Keeps migration history strictly linear — important for team environments.
+    out-of-order: false
+    encoding: UTF-8
+    # baseline-on-migrate and baseline-version are intentionally NOT set here.
+    # They are set per-environment: dev and prod need them, fresh installs do not.
+
+  # ── JPA ───────────────────────────────────────────────────
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:validate}
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+        default_schema: public
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+
+  # ── Jackson ───────────────────────────────────────────────
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+    time-zone: UTC
+
+# ── Server ────────────────────────────────────────────────
+server:
+  port: ${SERVER_PORT:8080}
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/plain
+    min-response-size: 1024
+  error:
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
+    include-exception: false
+
+# ── Application Custom Properties ─────────────────────────
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    access-token-expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:3600000}      # 1 hour
+    refresh-token-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}  # 7 days
+    issuer: foodmap
+
+  goong:
+    api-key: ${GOONG_API_KEY}
+    map-key: ${GOONG_MAP_KEY}
+    base-url: https://rsapi.goong.io
+    connect-timeout-ms: 5000
+    read-timeout-ms: 10000
+    # Provider-safe global RPS. Shared across every caller in the JVM.
+    # Raise deliberately — provider quota recovers slowly from overuse.
+    max-requests-per-second: ${GOONG_MAX_RPS:1.0}
+    # Total attempts including the initial try. 3 = 1 try + 2 retries.
+    max-retry-attempts: ${GOONG_MAX_RETRY_ATTEMPTS:3}
+    # Exponential backoff schedule (per retry, ms). Jitter ±25% added.
+    retry-backoff-ms: ${GOONG_RETRY_BACKOFF_MS:2000,5000,15000}
+    retry-max-backoff-ms: ${GOONG_RETRY_MAX_BACKOFF_MS:30000}
+
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
+  restaurant:
+    sync-ttl-days: ${RESTAURANT_SYNC_TTL_DAYS:7}
+    viewport-max-results: 200
+    nearby-default-radius-m: 1500
+    nearby-max-radius-m: 5000
+
+  # Restaurant search (read-only). Stage 1 reads at most this many candidates
+  # from PostgreSQL; the Java ranker orders them. See SearchProperties.
+  search:
+    candidate-cap: ${SEARCH_CANDIDATE_CAP:300}
+
+  # Background discovery ingestion pipeline (Phase 3 redesign).
+  # See IngestionProperties for the why behind each knob.
+  ingestion:
+    queue-capacity: ${INGESTION_QUEUE_CAPACITY:1000}
+    workers: ${INGESTION_WORKERS:1}
+    # Snapshot mode: Goong is a manually controlled ingestion source and the
+    # PostgreSQL snapshot serves every user flow. All three triggers are OFF
+    # by default; set the env var to true only for a deliberate ingestion run.
+    #   seed-on-startup            walk the HCMC seed cells at startup
+    #   viewport-enqueue-enabled   map viewport/nearby requests enqueue stale cells
+    #   scheduled-recrawl-enabled  03:00 recrawl of the oldest cells
+    seed-on-startup: ${INGESTION_SEED_ON_STARTUP:false}
+    viewport-enqueue-enabled: ${INGESTION_VIEWPORT_ENQUEUE_ENABLED:false}
+    scheduled-recrawl-enabled: ${INGESTION_SCHEDULED_RECRAWL_ENABLED:false}
+    daily-recrawl-budget: ${INGESTION_DAILY_RECRAWL_BUDGET:50}
+    # Goong has no Nearby Search endpoint. Discovery fans out a curated
+    # keyword list against Place AutoComplete with location bias instead.
+    # Override per-env via INGESTION_KEYWORDS="a,b,c".
+    # Phase-1 broad-category fanout only. Cuisine/dish enrichment is
+    # offline (derived from already-stored name/category fields), not
+    # provider-driven. Do NOT add dish keywords here without raising the
+    # global RPS budget and re-doing the call-budget math.
+    keywords: ${INGESTION_KEYWORDS:restaurant,cafe}
+    max-keywords-per-cell: ${INGESTION_MAX_KEYWORDS_PER_CELL:2}
+    # ── Viewport enrichment workflow cooldowns / retries ─────────────
+    # Knobs for the per-cell state machine. See IngestionProperties for
+    # the full state diagram (READY ↔ FAILED, cooldown bands).
+    fresh-cooldown-days:        ${INGESTION_FRESH_COOLDOWN_DAYS:30}
+    low-density-threshold:      ${INGESTION_LOW_DENSITY_THRESHOLD:3}
+    low-density-cooldown-hours: ${INGESTION_LOW_DENSITY_COOLDOWN_HOURS:6}
+    retry-base-backoff-minutes: ${INGESTION_RETRY_BASE_BACKOFF_MIN:2}
+    retry-max-backoff-minutes:  ${INGESTION_RETRY_MAX_BACKOFF_MIN:60}
+    max-retry-attempts:         ${INGESTION_MAX_RETRY_ATTEMPTS:3}
+    failed-cooldown-hours:      ${INGESTION_FAILED_COOLDOWN_HOURS:24}
+
+  # ── Place ranking formula ─────────────────────────────────
+  # Weights must sum to 1.0. Adjust per environment if needed.
+  # See RankingProperties for full documentation of each knob.
+  ranking:
+    weights:
+      distance: 0.50           # favour proximity
+      popularity: 0.30         # favour high-rated, well-reviewed places
+      recency: 0.10            # favour recently synced data
+      category-relevance: 0.10 # boost exact cuisine-type matches
+    distance:
+      half-life-km: 1.0        # distance at which score halves (1.0 = 500m→0.67, 1km→0.50)
+    popularity:
+      max-review-count: 100    # log-normalisation ceiling for review count
+    recency:
+      max-age-days: 365        # data older than this scores 0.0 on recency
+
+  cache:
+    trending-ttl-minutes: 30
+    restaurant-list-ttl-minutes: 5
+
+# ── OpenAPI / Swagger ─────────────────────────────────────
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+    tags-sorter: alpha
+
+# ── Logging ───────────────────────────────────────────────
+logging:
+  level:
+    root: INFO
+    com.foodmap: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{40} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{40} - %msg%n"

@@ -1,0 +1,36 @@
+# ── Production Profile ────────────────────────────────────
+# All secrets MUST come from environment variables.
+# No default values for sensitive properties here.
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  flyway:
+    # Same baseline strategy as dev — production DB existed before Flyway was introduced.
+    # On first deployment with Flyway, this baselines V1 without re-running it.
+    # On subsequent deployments, Flyway applies any new migrations (V2, V3, ...).
+    baseline-on-migrate: true
+    baseline-version: 1
+
+  datasource:
+    hikari:
+      minimum-idle: 10
+      maximum-pool-size: 50
+
+server:
+  error:
+    include-message: never
+    include-stacktrace: never
+
+logging:
+  level:
+    root: WARN
+    com.foodmap: INFO
+  file:
+    name: /var/log/foodmap/application.log

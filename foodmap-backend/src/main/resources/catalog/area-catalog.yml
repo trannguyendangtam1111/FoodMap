@@ -1,0 +1,85 @@
+# FoodMap discovery areas — server-owned search scopes for "area=<key>".
+#
+# These are FoodMap SEARCH AREAS: a centre and a radius chosen so the area
+# holds that district's restaurants in FoodMap's data. They are NOT
+# administrative boundaries and must never be described as such
+# ("Khu vực là vùng tìm kiếm của FoodMap, không phải ranh giới hành chính.").
+#
+# Loaded once at startup (AreaCatalogLoader) and validated; an invalid file
+# stops the application. Clients only ever see key, label and order:
+# centres and radii stay on the server, and no distance is ever shown for an
+# area (it would be a distance from this centre, not from the user).
+#
+# Fields
+#   minimumRestaurants  an area with fewer active restaurants inside its
+#                       radius is unavailable: left out of GET /api/v1/catalog
+#                       and rejected as area=<key> (re-measured every minute)
+#   key                 stable lowercase slug, unique
+#   label               Vietnamese display label, unique ("Quanh {label}")
+#   order               display order, positive and unique
+#   center              {lat, lng} — median of the district's restaurants in
+#                       the 2026-10-03 data (Master Specification §8.2)
+#   radiusMeters        100..5000; an area never widens beyond it
+
+minimumRestaurants: 15
+
+areas:
+  - key: quan-1
+    label: Quận 1
+    order: 10
+    center: { lat: 10.7737, lng: 106.6999 }
+    radiusMeters: 2000
+
+  - key: quan-3
+    label: Quận 3
+    order: 20
+    center: { lat: 10.7821, lng: 106.6828 }
+    radiusMeters: 1800
+
+  - key: quan-5
+    label: Quận 5
+    order: 30
+    center: { lat: 10.7544, lng: 106.6652 }
+    radiusMeters: 2000
+
+  - key: quan-7
+    label: Quận 7
+    order: 40
+    center: { lat: 10.7317, lng: 106.7193 }
+    radiusMeters: 3000
+
+  - key: quan-10
+    label: Quận 10
+    order: 50
+    center: { lat: 10.7764, lng: 106.6684 }
+    radiusMeters: 1800
+
+  - key: binh-thanh
+    label: Bình Thạnh
+    order: 60
+    center: { lat: 10.8024, lng: 106.7136 }
+    radiusMeters: 2500
+
+  - key: phu-nhuan
+    label: Phú Nhuận
+    order: 70
+    center: { lat: 10.7972, lng: 106.6811 }
+    radiusMeters: 1800
+
+  - key: go-vap
+    label: Gò Vấp
+    order: 80
+    center: { lat: 10.8385, lng: 106.6630 }
+    radiusMeters: 3000
+
+  - key: tan-binh
+    label: Tân Bình
+    order: 90
+    center: { lat: 10.8133, lng: 106.6643 }
+    radiusMeters: 2500
+
+  - key: thu-duc
+    label: Thủ Đức (An Phú – Thảo Điền)
+    order: 100
+    center: { lat: 10.8145, lng: 106.7536 }
+    radiusMeters: 4000

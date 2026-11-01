@@ -1,0 +1,36 @@
+# FoodMap: local development database.
+#
+#   docker compose up -d      PostgreSQL/PostGIS on localhost:5434
+#
+# The backend (Maven, port 8082) and frontend (Vite, port 5173) run natively.
+# Credentials come from DB_USERNAME / DB_PASSWORD in the .env next to this file.
+# Port 5434 avoids clashing with a PostgreSQL server already running on 5432.
+name: foodmap
+
+services:
+  foodmap-postgres:
+    image: postgis/postgis:16-3.4
+    container_name: foodmap-postgres
+    restart: unless-stopped
+    environment:
+      # Only used to initialise an empty data directory on first start.
+      POSTGRES_DB: foodmap_dev
+      POSTGRES_USER: ${DB_USERNAME:-foodmap}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env}
+    ports:
+      # Only this machine can reach it.
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - foodmap-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  foodmap-db-data:
+    # Project-owned volume, created by Compose on the first `docker compose up`.
+    # To reuse an existing local volume instead, declare it with `external: true`
+    # in a git-ignored docker-compose.override.yml (Compose merges it automatically).
+    name: foodmap-db-data

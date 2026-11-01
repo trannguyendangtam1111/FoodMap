@@ -1,0 +1,27 @@
+# ── Secrets: real values live only in local .env files ─────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Local Docker Compose overrides (machine-specific) ─────────────────────
+docker-compose.override.yml
+
+# ── Dependencies and build output ───────────────────────────────────────────
+node_modules/
+dist/
+target/
+ingestion-runs/
+coverage/
+*.log
+
+# ── IDE / OS ────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# ── Local AI-assistant tooling (never part of the project) ──────────────────
+.claude/
+CLAUDE.md
+CLAUDE.local.md

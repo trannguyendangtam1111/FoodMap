@@ -1,0 +1,28 @@
+# One-shot snapshot ingestion run (SnapshotIngestionRunner). Use with the
+# database profile, e.g. --spring.profiles.active=dev,snapshot-ingest
+# The process serves no users, starts no automatic ingestion, runs once and
+# exits. Goong is reachable only inside an executing run, within its budget.
+spring:
+  main:
+    web-application-type: none
+
+app:
+  ingestion:
+    seed-on-startup: false
+    viewport-enqueue-enabled: false
+    scheduled-recrawl-enabled: false
+  # Per run, on the command line: areas / cells, max-cells (default 3, max 50),
+  # budget (required, 1..300; >100 needs large=true), execute (default false =
+  # dry run), include-crawled, resume, foods (food probes, one area).
+  # Reports go to report-dir; they are also the ledger: before executing, the
+  # runner refuses when the rolling 24 h Goong usage they record plus this
+  # run's budget exceeds daily-ceiling, or when a planned food × area pair was
+  # already probed (or is pending — finish it with resume).
+  # AUTO (auto=true): the runner chooses the food × area probes itself, wave by
+  # wave, within min(budget, daily-ceiling − 24 h usage). Options (defaults):
+  # auto.max-probes (20), auto.areas (all), auto.exclude-foods
+  # (mi,nuong,chay,ca-phe,tra-sua,kem), auto.target (3), auto.min-score (0.25),
+  # auto.wave-size (6), auto.allowed-db (localhost:5434/foodmap_dev).
+  snapshot:
+    report-dir: ingestion-runs
+    daily-ceiling: 120

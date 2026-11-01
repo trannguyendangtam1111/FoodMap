@@ -1,0 +1,327 @@
+# FoodMap food vocabulary — the single source of truth for food keys.
+#
+# Loaded once at startup (FoodCatalogLoader) into immutable memory and
+# validated; an invalid catalog stops the application. Keywords and
+# suppressors stay on the server: GET /api/v1/catalog never returns them.
+#
+# Fields
+#   key             stable slug ("available" is reserved)
+#   label           Vietnamese display label
+#   kind            MEAL | DRINK | DESSERT  (the cà mèn draws MEAL only)
+#   parentCategory  one of the 12 CategoryArt keys: noodle hotpot rice
+#                   vietnamese bakery pizza coffee vegetarian dessert
+#                   japanese seafood other
+#   tone            optional: chili turmeric crust taro pandan dragonfruit
+#                   brand (defaults to the parent category's tone)
+#   keywords        written with natural accents; a plain string, or
+#                   {text, asciiSafe}. asciiSafe: false stops a name written
+#                   without diacritics from matching the folded form
+#                   ("mien" can also be "miền", "chao" can be "chào").
+#   suppressors     words that cancel this entry's match in the same text
+#                   (a name or a menu dish): "bánh mì" is not mì, a
+#                   "Restaurant & Cafe" is not a café
+#   discoverable    shown in food discovery; false = classification only
+#   order           curated display order (required and unique when
+#                   discoverable) — never derived from restaurant counts
+#   artKey          FoodArt drawing key (defaults to key)
+#
+# Matching rules (FoodMatcher): whole words / phrases only; a name with
+# Vietnamese diacritics matches only the accented keyword; a name written
+# without diacritics matches the folded keyword when asciiSafe.
+
+foods:
+
+  # ── Discoverable (Master Specification §6.6, in its listed order) ─────────
+
+  - key: ca-phe
+    label: Cà phê
+    kind: DRINK
+    parentCategory: coffee
+    keywords: [cà phê, cafe, café, coffee]
+    # "Restaurant & Cafe …" is a restaurant, not a café (V1 inferCategory rule)
+    suppressors: [restaurant, restaurants, nhà hàng, quán ăn, bistro]
+    discoverable: true
+    order: 10
+
+  - key: tra-sua
+    label: Trà sữa
+    kind: DRINK
+    parentCategory: coffee
+    keywords: [trà sữa, milk tea]
+    discoverable: true
+    order: 20
+
+  - key: bun
+    label: Bún
+    kind: MEAL
+    parentCategory: noodle
+    keywords: [bún]
+    discoverable: true
+    order: 30
+
+  - key: bun-bo
+    label: Bún bò
+    kind: MEAL
+    parentCategory: noodle
+    keywords: [bún bò]
+    discoverable: true
+    order: 40
+
+  - key: pho
+    label: Phở
+    kind: MEAL
+    parentCategory: noodle
+    keywords: [phở]
+    discoverable: true
+    order: 50
+
+  - key: hu-tieu
+    label: Hủ tiếu
+    kind: MEAL
+    parentCategory: noodle
+    keywords: [hủ tiếu, hủ tíu, hủ híu]
+    discoverable: true
+    order: 60
+
+  - key: mi
+    label: Mì
+    kind: MEAL
+    parentCategory: noodle
+    keywords:
+      - {text: mì, asciiSafe: false}
+      - {text: mỳ, asciiSafe: false}
+      - ramen
+      - udon
+    suppressors: [bánh mì]
+    discoverable: true
+    order: 70
+
+  - key: com
+    label: Cơm
+    kind: MEAL
+    parentCategory: rice
+    keywords: [cơm, cơm tấm]
+    discoverable: true
+    order: 80
+
+  - key: chao
+    label: Cháo
+    kind: MEAL
+    parentCategory: rice
+    keywords:
+      - {text: cháo, asciiSafe: false}
+    discoverable: true
+    order: 90
+
+  - key: banh-mi
+    label: Bánh mì
+    kind: MEAL
+    parentCategory: bakery
+    keywords: [bánh mì]
+    discoverable: true
+    order: 100
+
+  - key: banh-xeo
+    label: Bánh xèo
+    kind: MEAL
+    parentCategory: vietnamese
+    keywords: [bánh xèo]
+    discoverable: true
+    order: 110
+
+  - key: lau
+    label: Lẩu
+    kind: MEAL
+    parentCategory: hotpot
+    # ASCII "lau" in a name or a food search means lẩu; "lầu" (floor) lives in
+    # addresses, which classification never reads.
+    keywords: [lẩu, hotpot, hot pot]
+    discoverable: true
+    order: 120
+
+  - key: nuong
+    label: Đồ nướng
+    kind: MEAL
+    parentCategory: hotpot
+    keywords: [nướng, bbq, grill]
+    discoverable: true
+    order: 130
+
+  - key: hai-san
+    label: Hải sản
+    kind: MEAL
+    parentCategory: seafood
+    keywords: [hải sản, seafood, seafoods]
+    discoverable: true
+    order: 140
+
+  - key: pizza
+    label: Pizza
+    kind: MEAL
+    parentCategory: pizza
+    keywords: [pizza]
+    discoverable: true
+    order: 150
+
+  - key: sushi
+    label: Sushi
+    kind: MEAL
+    parentCategory: japanese
+    keywords: [sushi, sashimi]
+    discoverable: true
+    order: 160
+
+  - key: dimsum
+    label: Dimsum
+    kind: MEAL
+    parentCategory: other
+    keywords: [dimsum, dim sum]
+    discoverable: true
+    order: 170
+
+  - key: chay
+    label: Món chay
+    kind: MEAL
+    parentCategory: vegetarian
+    keywords: [chay, vegan, vegetarian]
+    discoverable: true
+    order: 180
+
+  - key: che
+    label: Chè
+    kind: DESSERT
+    parentCategory: dessert
+    keywords: [chè]
+    discoverable: true
+    order: 190
+
+  - key: kem
+    label: Kem
+    kind: DESSERT
+    parentCategory: dessert
+    keywords: [kem, gelato, ice cream]
+    suppressors: [bánh kem]        # cake, not ice cream
+    discoverable: true
+    order: 200
+
+  # ── Classification only (§6.2): the remaining V1 inferCategory keywords ────
+  # Not offered in discovery; they let the server classify restaurants as
+  # the V1 frontend did, so category.js can drop its keyword lists later.
+
+  - key: banh-bao
+    label: Bánh bao
+    kind: MEAL
+    parentCategory: bakery
+    keywords: [bánh bao]
+    discoverable: false
+
+  - key: bakery
+    label: Tiệm bánh
+    kind: MEAL
+    parentCategory: bakery
+    keywords: [bakery, boulangerie, croissant]
+    discoverable: false
+
+  - key: banh-canh
+    label: Bánh canh
+    kind: MEAL
+    parentCategory: noodle
+    keywords: [bánh canh]
+    discoverable: false
+
+  - key: mien
+    label: Miến
+    kind: MEAL
+    parentCategory: noodle
+    keywords:
+      - {text: miến, asciiSafe: false}
+    discoverable: false
+
+  - key: noodle
+    label: Mì sợi
+    kind: MEAL
+    parentCategory: noodle
+    keywords: [noodle, noodles]
+    discoverable: false
+
+  - key: xoi
+    label: Xôi
+    kind: MEAL
+    parentCategory: rice
+    keywords: [xôi]
+    discoverable: false
+
+  - key: rice
+    label: Món cơm
+    kind: MEAL
+    parentCategory: rice
+    keywords: [rice]
+    discoverable: false
+
+  - key: oc
+    label: Ốc
+    kind: MEAL
+    parentCategory: seafood
+    keywords:
+      - {text: ốc, asciiSafe: false}
+    discoverable: false
+
+  - key: cua-ghe
+    label: Cua ghẹ
+    kind: MEAL
+    parentCategory: seafood
+    keywords:
+      - {text: cua, asciiSafe: false}
+      - {text: ghẹ, asciiSafe: false}
+    discoverable: false
+
+  - key: mon-nhat
+    label: Món Nhật
+    kind: MEAL
+    parentCategory: japanese
+    keywords: [japanese]
+    discoverable: false
+
+  - key: pasta
+    label: Mì Ý
+    kind: MEAL
+    parentCategory: pizza
+    keywords: [pasta, spaghetti]
+    discoverable: false
+
+  - key: tra
+    label: Trà
+    kind: DRINK
+    parentCategory: coffee
+    keywords:
+      - {text: trà, asciiSafe: false}
+      - tea
+    discoverable: false
+
+  - key: sinh-to
+    label: Sinh tố
+    kind: DRINK
+    parentCategory: coffee
+    keywords: [sinh tố]
+    discoverable: false
+
+  - key: nuoc-ep
+    label: Nước ép
+    kind: DRINK
+    parentCategory: coffee
+    keywords: [nước ép, juice]
+    discoverable: false
+
+  - key: sua-chua
+    label: Sữa chua
+    kind: DESSERT
+    parentCategory: dessert
+    keywords: [sữa chua, yogurt]
+    discoverable: false
+
+  - key: trang-mieng
+    label: Tráng miệng
+    kind: DESSERT
+    parentCategory: dessert
+    keywords: [dessert]
+    discoverable: false

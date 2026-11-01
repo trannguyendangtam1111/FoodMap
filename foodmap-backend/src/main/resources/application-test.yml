@@ -1,0 +1,47 @@
+# ── Test Profile ──────────────────────────────────────────
+# Used by @SpringBootTest. Isolates tests from dev/prod config.
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:foodmap_test;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      # create-drop: H2 schema is created from entities at test start, dropped at end.
+      # Tests verify application logic, not migrations — Flyway is not involved here.
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+
+  flyway:
+    # Disabled in tests for two reasons:
+    # 1. V1 migration uses PostgreSQL-specific syntax (BIGSERIAL, TIMESTAMPTZ)
+    #    that H2 does not support even in PostgreSQL compatibility mode.
+    # 2. Tests rely on ddl-auto: create-drop to reset schema between test runs.
+    enabled: false
+
+app:
+  jwt:
+    secret: test-secret-key-for-unit-tests-only-minimum-32-characters
+    access-token-expiration-ms: 3600000
+    refresh-token-expiration-ms: 604800000
+    issuer: foodmap-test
+
+  goong:
+    api-key: test-key
+    map-key: test-map-key
+    base-url: http://localhost:9999
+    connect-timeout-ms: 1000
+    read-timeout-ms: 1000
+
+  cors:
+    allowed-origins: http://localhost:5173
+
+  ingestion:
+    # SeedCrawler would otherwise enqueue the HCMC seed cells on startup and
+    # hit the unreachable goong.base-url above (localhost:9999).
+    seed-on-startup: false

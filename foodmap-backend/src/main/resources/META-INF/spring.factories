@@ -1,0 +1,6 @@
+org.springframework.boot.diagnostics.FailureAnalyzer=\
+com.foodmap.security.InvalidJwtSecretFailureAnalyzer,\
+com.foodmap.catalog.InvalidFoodCatalogFailureAnalyzer,\
+com.foodmap.catalog.InvalidAreaCatalogFailureAnalyzer
+org.springframework.context.ApplicationListener=\
+com.foodmap.common.security.LogRedactionInstaller

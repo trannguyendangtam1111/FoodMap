@@ -1,0 +1,63 @@
+# ── Development Profile ───────────────────────────────────
+# Loaded when SPRING_PROFILES_ACTIVE=dev
+# Overrides application.yml with dev-friendly defaults.
+# Do NOT commit real secrets here — use .env or IDE env vars.
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5434/foodmap_dev}
+    username: ${DB_USERNAME:foodmap}
+    password: ${DB_PASSWORD:foodmap}
+
+  jpa:
+    hibernate:
+      # validate: Hibernate checks that all tables and columns exist at startup
+      # but does NOT modify the schema. All schema changes go through Flyway.
+      # Previously "update" — changed to "validate" once Flyway took ownership.
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    # baseline-on-migrate: true is required for any existing database.
+    #
+    # Scenario A — Fresh dev setup (empty DB):
+    #   Flyway creates flyway_schema_history, runs V1 normally. This flag is harmless.
+    #
+    # Scenario B — Existing dev DB (created by the old ddl-auto: update):
+    #   Flyway finds tables but no flyway_schema_history. Without this flag it would
+    #   throw: "Found non-empty schema without Flyway's schema history table."
+    #   With this flag it creates the history table, inserts a V1 baseline record
+    #   (without re-running V1), and starts applying from V2 onward.
+    #
+    baseline-on-migrate: true
+    baseline-version: 1
+
+server:
+  # 8082 keeps clear of the common 8080 default. SERVER_PORT still overrides it.
+  port: ${SERVER_PORT:8082}
+
+app:
+  jwt:
+    # Dev secret — minimum 32 chars for HS256. Replace before any staging deploy.
+    secret: ${JWT_SECRET:dev-foodmap-secret-key-replace-in-production-minimum-32-chars}
+
+  goong:
+    api-key: ${GOONG_API_KEY:your-goong-api-key-here}
+    map-key: ${GOONG_MAP_KEY:your-goong-map-key-here}
+
+  seed:
+    # Shared password for the seeded demo accounts (DataSeeder, dev profile only).
+    # No default on purpose: set SEED_DEMO_PASSWORD (8–100 chars) when seeding an empty DB.
+    demo-password: ${SEED_DEMO_PASSWORD:}
+
+  cors:
+    allowed-origins: http://localhost:5173,http://localhost:3000
+
+logging:
+  level:
+    com.foodmap: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE

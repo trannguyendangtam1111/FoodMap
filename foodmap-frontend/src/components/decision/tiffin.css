@@ -1,0 +1,145 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   TiffinBox motion — "Ăn gì hôm nay?"
+   Transforms and opacity only (compositor-friendly), no filters. Every
+   decorative motion lives inside `prefers-reduced-motion: no-preference`;
+   with reduced motion the box simply shows its closed or open pose.
+   The phase comes from data-phase on .fm-tiffin (see useTiffinDecision).
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.fm-tiffin [data-part] {
+  transform-box: fill-box;
+}
+.fm-tiffin [data-part='box']    { transform-origin: 50% 100%; }
+.fm-tiffin [data-part='shadow'] { transform-origin: 50% 50%; }
+.fm-tiffin [data-part='steam']  { transform-origin: 50% 100%; }
+
+/* Lid hinges on its left edge, like the clip of a real cà mèn. */
+.fm-tiffin [data-part='lid'] {
+  transform-origin: 0% 100%;
+  transition: transform var(--fm-dur-slow) var(--fm-ease-out);
+}
+
+/* The FoodMap pin waiting inside the box — hidden behind the tiers. */
+.fm-tiffin [data-part='pin'] {
+  transform-origin: 50% 100%;
+  opacity: 0;
+  transform: translateY(30px) scale(0.6);
+  transition:
+    transform var(--fm-dur-slow) var(--fm-ease-out),
+    opacity var(--fm-dur-fast) var(--fm-ease-out);
+}
+
+/* ── Open pose: OPENING animates into it, REVEALED holds it ────────────── */
+.fm-tiffin[data-phase='opening'] [data-part='lid'],
+.fm-tiffin[data-phase='revealed'] [data-part='lid'] {
+  transform: translate(-6px, -14px) rotate(-24deg);
+}
+.fm-tiffin[data-phase='opening'] [data-part='pin'],
+.fm-tiffin[data-phase='revealed'] [data-part='pin'] {
+  opacity: 1;
+  transform: none;
+}
+.fm-tiffin[data-phase='opening'] [data-part='steam'],
+.fm-tiffin[data-phase='revealed'] [data-part='steam'] {
+  opacity: 0;
+  transition: opacity var(--fm-dur-fast) var(--fm-ease-out);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Idle: a slow bob — a few cycles, then rest; hovering wakes it up. */
+  .fm-tiffin[data-phase='idle'] [data-part='box'] {
+    animation: fm-tiffin-bob 3.2s ease-in-out 4;
+  }
+  .fm-tiffin[data-phase='idle'] [data-part='shadow'] {
+    animation: fm-tiffin-shadow 3.2s ease-in-out 4;
+  }
+  .fm-tiffin[data-phase='idle'][data-interactive]:hover [data-part='box'],
+  .fm-tiffin[data-phase='idle'][data-interactive]:hover [data-part='shadow'] {
+    animation-iteration-count: infinite;
+  }
+
+  /* Press: instant squash, on pointer down and in the PRESSING phase. */
+  .fm-tiffin[data-phase='idle'][data-interactive]:active [data-part='box'] {
+    animation: none;
+    transform: translateY(2px) scale(1.04, 0.94);
+    transition: transform var(--fm-dur-instant) var(--fm-ease-out);
+  }
+  .fm-tiffin[data-phase='pressing'] [data-part='box'] {
+    animation: fm-tiffin-squash var(--fm-dur-fast) var(--fm-ease-out) forwards;
+  }
+
+  /* Deciding: one readable shake, then a gentle simmer while waiting. */
+  .fm-tiffin[data-phase='deciding'] [data-part='box'] {
+    animation:
+      fm-tiffin-shake 520ms ease-in-out 1,
+      fm-tiffin-simmer 1.2s ease-in-out 520ms infinite;
+  }
+  .fm-tiffin[data-phase='deciding'] [data-part='lid'] {
+    /* Delayed so a reroll can first close the lid with its transition. */
+    animation: fm-tiffin-rattle 280ms linear var(--fm-dur-slow) infinite;
+  }
+  .fm-tiffin[data-phase='deciding'] [data-part='steam'] {
+    animation: fm-tiffin-steam 1.2s ease-in-out infinite;
+  }
+
+  /* Opening: the box settles, the lid swings up (spring), the pin pops out. */
+  .fm-tiffin[data-phase='opening'] [data-part='box'] {
+    animation: fm-tiffin-settle 400ms var(--fm-ease-out) 1;
+  }
+  .fm-tiffin[data-phase='opening'] [data-part='lid'] {
+    transition: transform 400ms var(--fm-ease-spring);
+  }
+  .fm-tiffin[data-phase='opening'] [data-part='pin'] {
+    transition:
+      transform 360ms var(--fm-ease-spring) 80ms,
+      opacity var(--fm-dur-fast) var(--fm-ease-out) 80ms;
+  }
+
+  /* Result card rising out of the box. */
+  .fm-reveal {
+    animation: fm-reveal var(--fm-dur-reveal) var(--fm-ease-spring) both;
+  }
+}
+
+@keyframes fm-tiffin-bob {
+  0%, 100% { transform: none; }
+  50%      { transform: translateY(-4px); }
+}
+@keyframes fm-tiffin-shadow {
+  0%, 100% { transform: none; opacity: 1; }
+  50%      { transform: scale(0.9); opacity: 0.75; }
+}
+@keyframes fm-tiffin-squash {
+  to { transform: translateY(2px) scale(1.05, 0.92); }
+}
+@keyframes fm-tiffin-shake {
+  0%, 100% { transform: none; }
+  15%      { transform: translateX(-3px) rotate(-4deg); }
+  30%      { transform: translateX(3px) rotate(4deg); }
+  45%      { transform: translateX(-2.5px) rotate(-3deg); }
+  60%      { transform: translateX(2px) rotate(2.5deg); }
+  75%      { transform: translateX(-1px) rotate(-1.5deg); }
+}
+@keyframes fm-tiffin-simmer {
+  0%, 100% { transform: none; }
+  50%      { transform: translateY(-2px) scale(1.01, 0.99); }
+}
+@keyframes fm-tiffin-rattle {
+  0%, 100% { transform: none; }
+  25%      { transform: translateY(-2px) rotate(-1.5deg); }
+  75%      { transform: translateY(-1px) rotate(1deg); }
+}
+@keyframes fm-tiffin-steam {
+  0%   { opacity: 0.25; transform: translateY(4px); }
+  50%  { opacity: 1; }
+  100% { opacity: 0.25; transform: translateY(-4px); }
+}
+@keyframes fm-tiffin-settle {
+  0%   { transform: translateY(2px) scale(1.03, 0.95); }
+  60%  { transform: translateY(-2px) scale(0.99, 1.02); }
+  100% { transform: none; }
+}
+@keyframes fm-reveal {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
