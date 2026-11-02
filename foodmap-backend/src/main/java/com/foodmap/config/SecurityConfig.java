@@ -44,6 +44,7 @@ public class SecurityConfig {
     private String allowedOrigins;
 
     private static final String[] PUBLIC_GET_PATTERNS = {
+        "/actuator/health/liveness",
         "/api/v1/restaurants/**",
         "/api/v1/foods/**",
         "/api/v1/trending/**",
@@ -113,7 +114,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
+        config.setAllowedOrigins(Arrays.stream(allowedOrigins.split(","))
+            .map(String::trim)
+            .filter(origin -> !origin.isEmpty())
+            .toList());
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
         // X-Indexing-Cells is read by the frontend to show an

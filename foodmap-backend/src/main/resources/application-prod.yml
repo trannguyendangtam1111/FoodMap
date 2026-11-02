@@ -12,25 +12,56 @@ spring:
         format_sql: false
 
   flyway:
-    # Same baseline strategy as dev — production DB existed before Flyway was introduced.
-    # On first deployment with Flyway, this baselines V1 without re-running it.
-    # On subsequent deployments, Flyway applies any new migrations (V2, V3, ...).
-    baseline-on-migrate: true
-    baseline-version: 1
+    # Neon already has the restored history. ProductionFlywayConfig validates only.
+    baseline-on-migrate: false
+    clean-disabled: true
+    validate-on-migrate: true
+    out-of-order: false
 
   datasource:
     hikari:
-      minimum-idle: 10
-      maximum-pool-size: 50
+      minimum-idle: ${DB_POOL_MIN_IDLE:0}
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:5}
+      connection-timeout: 5000
+      validation-timeout: 1000
+      data-source-properties:
+        sslmode: require
 
 server:
+  address: 0.0.0.0
+  port: ${PORT:${SERVER_PORT:10000}}
+  forward-headers-strategy: framework
   error:
     include-message: never
     include-stacktrace: never
+
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
+  goong:
+    # Snapshot browsing requires no provider credentials.
+    api-key: ${GOONG_API_KEY:}
+    map-key: ${GOONG_MAP_KEY:}
+  ingestion:
+    seed-on-startup: false
+    viewport-enqueue-enabled: false
+    scheduled-recrawl-enabled: false
+
+management:
+  endpoints:
+    enabled-by-default: false
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      enabled: true
+      show-details: never
+      show-components: never
+      probes:
+        enabled: true
 
 logging:
   level:
     root: WARN
     com.foodmap: INFO
-  file:
-    name: /var/log/foodmap/application.log
