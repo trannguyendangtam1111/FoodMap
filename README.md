@@ -12,7 +12,7 @@ Cà mèn / Roll -> food suggestion -> Food Page -> restaurant detail
 
 Users can also search directly, browse available foods, or explore the map.
 
-**Repository:** TODO: add the actual GitHub repository URL.
+**Repository:** [github.com/trannguyendangtam1111/FoodMap](https://github.com/trannguyendangtam1111/FoodMap)
 
 ## Features
 
@@ -109,8 +109,13 @@ not apply to fixed area scopes. Rate limits return `429` with `Retry-After`.
 - Docker with Docker Compose for local PostgreSQL/PostGIS
 - A Goong map key for the map; a Goong REST API key only for explicit ingestion
 
-**TODO:** add the actual clone URL. After obtaining the repository, open a
-terminal in its root directory. Examples below use PowerShell.
+Clone the repository and open a terminal in its root directory. Examples below
+use PowerShell.
+
+```powershell
+git clone https://github.com/trannguyendangtam1111/FoodMap.git
+Set-Location FoodMap
+```
 
 ### 1. Environment
 
@@ -133,9 +138,7 @@ Edit the copied files before starting. Keep secrets out of version control.
 | `VITE_GOONG_MAP_KEY` | Real map tiles key for the frontend map |
 | `VITE_API_BASE_URL` | Backend origin without `/api/v1`; leave empty for Vite's proxy, or use `http://localhost:8082` |
 
-Set `JPA_DDL_AUTO=validate` in the copied root `.env` to keep schema management
-with Flyway. The current example says `update`; the `dev` profile explicitly
-sets `validate`. The production profile also uses `validate`.
+Flyway owns the schema; Hibernate only validates it (`ddl-auto: validate`).
 
 ### 2. Database
 
@@ -167,6 +170,8 @@ root settings, or supply environment variables through the shell/IDE instead.
 - Swagger UI: [http://localhost:8082/swagger-ui.html](http://localhost:8082/swagger-ui.html)
 - Default `dev` startup seeds sample restaurants, dishes, reviews, and demo users
   when no restaurants exist; no Goong ingestion run is needed.
+- Demo login (seeded accounts): for example `nguyen.minh.tuan@foodmap.dev` with
+  the `SEED_DEMO_PASSWORD` value from `.env`. You can also register a new account.
 
 ### 4. Frontend
 
@@ -230,11 +235,12 @@ for prerequisites, isolation, and coverage details.
 
 ## Screenshots
 
-TODO: add actual screenshots of the current application:
+Captured from a local run with the development database (1440×900).
 
-- Home with "Thèm gì?" and Cà mèn food reveal
-- Food Page with restaurant suggestion and list
-- Restaurant Detail
-- Food-aware Map, including its mobile layout
+| Home ("Thèm gì?" / Cà mèn) | Food Page |
+| --- | --- |
+| ![Home](docs/screenshots/home.png) | ![Food Page](docs/screenshots/food-page.png) |
 
-**Optional demo video:** TODO: add a link to a real application walkthrough.
+| Restaurant Detail | Food-aware Map |
+| --- | --- |
+| ![Restaurant Detail](docs/screenshots/restaurant-detail.png) | ![Map](docs/screenshots/map.png) |
