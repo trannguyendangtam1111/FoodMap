@@ -4,6 +4,7 @@ import { formatPriceLevel, formatRating } from '../../utils/format';
 import { formatDistance } from '../../utils/ranking';
 import { openingStatus } from '../../utils/openingStatus';
 import { categoryOf, isKnownCategory } from '../../utils/category';
+import { useI18n } from '../../i18n';
 
 /**
  * RestaurantMeta — one compact line of facts, in priority order:
@@ -32,6 +33,7 @@ export default function RestaurantMeta({
   size = 'sm',
   className = '',
 }) {
+  const { t } = useI18n();
   if (!restaurant) return null;
   const { avgRating, reviewCount, priceLevel } = restaurant;
   const status = openingStatus(restaurant);
@@ -45,7 +47,7 @@ export default function RestaurantMeta({
     items.push(
       <span key="distance" className="inline-flex items-center gap-0.5 font-semibold text-ink">
         <Icon name="map-pin" size={size === 'xs' ? 12 : 14} strokeWidth={2} />
-        <span className="sr-only">Cách bạn </span>
+        <span className="sr-only">{t('meta.distanceFromYou')}</span>
         {distance}
       </span>,
     );
@@ -70,7 +72,9 @@ export default function RestaurantMeta({
       <span
         key="rating"
         className="inline-flex items-center gap-0.5"
-        aria-label={`Đánh giá ${ratingText} trên 5${reviewCount > 0 ? `, ${reviewCount} lượt` : ''}`}
+        aria-label={reviewCount > 0
+          ? t('meta.ratingWithCount', { rating: ratingText, count: reviewCount })
+          : t('meta.rating', { rating: ratingText })}
       >
         <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"
              className={`${size === 'xs' ? 'h-3 w-3' : 'h-3.5 w-3.5'} text-star`}>
@@ -81,12 +85,12 @@ export default function RestaurantMeta({
       </span>,
     );
   } else if (showUnrated) {
-    items.push(<span key="unrated">Chưa có đánh giá</span>);
+    items.push(<span key="unrated">{t('meta.unrated')}</span>);
   }
 
   if (price) {
     items.push(
-      <span key="price" aria-label={`Mức giá ${priceLevel} trên 4`}>
+      <span key="price" aria-label={t('meta.price', { level: priceLevel })}>
         <span aria-hidden="true">{price}</span>
       </span>,
     );

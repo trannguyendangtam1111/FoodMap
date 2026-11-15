@@ -1,7 +1,8 @@
 import { forwardRef } from 'react';
 import FoodArt from '../art/FoodArt';
 import { countText, radiusText } from './FoodChip';
-import { inSentence } from '../../utils/scope';
+import { inSentence, scopeDtoLabel } from '../../utils/scope';
+import { t, useI18n } from '../../i18n';
 
 /**
  * FoodReveal — the FOOD that came out of the cà mèn.
@@ -22,12 +23,13 @@ export function supplyLine(decision) {
   const { restaurantCount, restaurantCountCapped, radiusMeters, radiusWidened, scope } = decision;
   return [
     countText(restaurantCount, restaurantCountCapped),
-    radiusWidened && Number.isFinite(radiusMeters) ? `trong ${radiusText(radiusMeters)}` : null,
-    inSentence(scope?.label),
+    radiusWidened && Number.isFinite(radiusMeters) ? t('food.within', { radius: radiusText(radiusMeters) }) : null,
+    inSentence(scopeDtoLabel(scope)),
   ].filter(Boolean).join(' ');
 }
 
 const FoodReveal = forwardRef(function FoodReveal({ decision, inert = false, animate = true, className = '' }, headingRef) {
+  useI18n();
   const { food } = decision;
   return (
     <article

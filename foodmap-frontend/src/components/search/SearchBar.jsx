@@ -8,6 +8,7 @@ import { matchFoods } from '../../api/catalog.api';
 import Spinner from '../ui/Spinner';
 import Icon from '../ui/Icon';
 import { formatRating } from '../../utils/format';
+import { useI18n } from '../../i18n';
 
 /**
  * SearchBar — real-time autocomplete + full-text search.
@@ -42,11 +43,12 @@ export default function SearchBar({
   onSearch,
   onClear,
   initialQuery = '',
-  placeholder = 'Tìm món, tìm quán…',
+  placeholder,
   inputId,
   size = 'md',
   className = '',
 }) {
+  const { t } = useI18n();
   const isLarge = size === 'lg';
   const [query, setQuery]           = useState(initialQuery);
   const [foods, setFoods]           = useState([]);
@@ -236,13 +238,13 @@ export default function SearchBar({
           <input
             ref={inputRef}
             id={inputId}
-            aria-label={placeholder}
+            aria-label={placeholder ?? t('search.placeholder')}
             type="text"
             value={query}
             onChange={(e) => { setQuery(e.target.value); setActiveIndex(-1); }}
             onFocus={() => setIsOpen(true)}
             onKeyDown={handleKeyDown}
-            placeholder={placeholder}
+            placeholder={placeholder ?? t('search.placeholder')}
             autoComplete="off"
             spellCheck={false}
             className={`w-full rounded-full border border-line bg-surface pr-10 text-ink
@@ -260,7 +262,7 @@ export default function SearchBar({
               <button
                 type="button"
                 onClick={handleClear}
-                aria-label="Xoá tìm kiếm"
+                aria-label={t('search.clear')}
                 className="rounded-full p-0.5 text-ink-subtle transition-colors hover:text-ink"
               >
                 <Icon name="x" size={16} strokeWidth={2} />
@@ -279,13 +281,13 @@ export default function SearchBar({
           {showRecent && (
             <section>
               <div className="flex items-center justify-between px-4 pb-1 pt-3">
-                <p className="text-label text-ink-muted">Tìm kiếm gần đây</p>
+                <p className="text-label text-ink-muted">{t('search.recent')}</p>
                 <button
                   type="button"
                   onClick={clearAllRecent}
                   className="rounded-tag text-label font-normal text-ink-muted transition-colors hover:text-brand-700"
                 >
-                  Xoá tất cả
+                  {t('search.clearAll')}
                 </button>
               </div>
               <ul>
@@ -304,7 +306,7 @@ export default function SearchBar({
                       type="button"
                       tabIndex={-1}
                       onClick={(e) => { e.stopPropagation(); removeRecent(term); }}
-                      aria-label={`Xoá “${term}” khỏi tìm kiếm gần đây`}
+                      aria-label={t('search.removeRecent', { term })}
                       className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5
                                  text-ink-subtle opacity-0 transition-opacity hover:text-ink group-hover:opacity-100"
                     >
@@ -322,7 +324,7 @@ export default function SearchBar({
               {/* Dishes */}
               {foods.length > 0 && (
                 <section>
-                  <p className="px-4 pb-1 pt-3 text-label text-ink-muted">Món ăn</p>
+                  <p className="px-4 pb-1 pt-3 text-label text-ink-muted">{t('search.dishes')}</p>
                   <ul>
                     {foods.map((food, idx) => (
                       <li key={food.key ?? food.id}>
@@ -344,7 +346,7 @@ export default function SearchBar({
                           </span>
                           <span className="flex-shrink-0 text-small font-semibold text-brand-700
                                            opacity-0 transition-opacity group-hover:opacity-100">
-                            {foodSource === 'catalog' ? 'Xem quán →' : 'Lọc trên bản đồ →'}
+                            {foodSource === 'catalog' ? t('search.viewPlaces') : t('search.filterOnMap')}
                           </span>
                         </button>
                       </li>
@@ -360,7 +362,7 @@ export default function SearchBar({
               {/* Restaurants */}
               {restaurants.length > 0 && (
                 <section>
-                  <p className="px-4 pb-1 pt-3 text-label text-ink-muted">Quán ăn</p>
+                  <p className="px-4 pb-1 pt-3 text-label text-ink-muted">{t('search.places')}</p>
                   <ul>
                     {restaurants.map((r, idx) => {
                       const itemIdx = foods.length + idx;
@@ -382,7 +384,7 @@ export default function SearchBar({
                             {r.avgRating > 0 && (
                               <span
                                 className="flex-shrink-0 text-small font-semibold tabular-nums text-ink"
-                                aria-label={`Đánh giá ${formatRating(r.avgRating)} trên 5`}
+                                aria-label={t('search.rating', { rating: formatRating(r.avgRating) })}
                               >
                                 <span aria-hidden="true" className="text-star">★</span> {formatRating(r.avgRating)}
                               </span>
@@ -401,9 +403,9 @@ export default function SearchBar({
           {showNoResults && (
             <div className="px-4 py-5 text-center">
               <p className="text-body text-ink-muted">
-                Không có kết quả cho <span className="font-semibold text-ink">“{q}”</span>
+                {t('search.noResultsFor')}<span className="font-semibold text-ink">“{q}”</span>
               </p>
-              <p className="mt-1 text-small text-ink-muted">Thử một từ khoá khác nhé</p>
+              <p className="mt-1 text-small text-ink-muted">{t('search.tryAnother')}</p>
             </div>
           )}
 

@@ -4,6 +4,8 @@ import SiteSearch from '../search/SiteSearch';
 import Icon from '../ui/Icon';
 import { buttonClass } from '../ui/Button';
 import Logo from './Logo';
+import LanguageSwitcher from './LanguageSwitcher';
+import { useI18n } from '../../i18n';
 
 const navLinkClass = ({ isActive }) =>
   `rounded-full px-3.5 py-2 text-small font-semibold transition-colors duration-fast ${
@@ -25,6 +27,7 @@ const navLinkClass = ({ isActive }) =>
  * fluid       bool  Full-width content (map page) instead of the centred container.
  */
 export default function AppHeader({ search, showSearch = true, fluid = false }) {
+  const { t } = useI18n();
   return (
     <header className="sticky top-0 z-30 flex-shrink-0 border-b border-line bg-cream/90 backdrop-blur-sm">
       <a
@@ -32,7 +35,7 @@ export default function AppHeader({ search, showSearch = true, fluid = false }) 
         className="sr-only rounded-full bg-surface px-4 py-2 text-small font-semibold text-ink shadow-e2
                    focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50"
       >
-        Bỏ qua đến nội dung
+        {t('layout.skipToContent')}
       </a>
 
       <div className={`mx-auto flex h-16 items-center gap-3 px-4 md:gap-4 ${fluid ? '' : 'max-w-6xl'}`}>
@@ -42,11 +45,12 @@ export default function AppHeader({ search, showSearch = true, fluid = false }) 
           {showSearch && (search ?? <SiteSearch />)}
         </div>
 
-        <nav aria-label="Điều hướng chính" className="ml-auto hidden items-center gap-1 md:flex">
-          <NavLink to="/map" className={navLinkClass}>Bản đồ</NavLink>
+        <nav aria-label={t('layout.mainNav')} className="ml-auto hidden items-center gap-1 md:flex">
+          <NavLink to="/map" className={navLinkClass}>{t('layout.map')}</NavLink>
           <DecisionLink />
         </nav>
 
+        <LanguageSwitcher />
         <AccountArea />
       </div>
     </header>
@@ -57,6 +61,7 @@ export default function AppHeader({ search, showSearch = true, fluid = false }) 
 
 /** "Ăn gì hôm nay?" — jumps to the cà mèn on the homepage (/#an-gi). */
 function DecisionLink() {
+  const { t } = useI18n();
   return (
     <Link
       to={{ pathname: '/', hash: '#an-gi' }}
@@ -65,14 +70,15 @@ function DecisionLink() {
                  transition-colors duration-fast hover:bg-brand-50"
     >
       <Icon name="tiffin" size={18} />
-      <span className="lg:hidden">Ăn gì?</span>
-      <span className="hidden lg:inline">Ăn gì hôm nay?</span>
+      <span className="lg:hidden">{t('layout.whatToEat')}</span>
+      <span className="hidden lg:inline">{t('layout.whatToEatToday')}</span>
     </Link>
   );
 }
 
 function AccountArea() {
   const { isAuthenticated, user, logout } = useAuth();
+  const { t } = useI18n();
 
   if (!isAuthenticated) {
     return (
@@ -80,17 +86,17 @@ function AccountArea() {
         {/* Mobile: one icon link */}
         <Link
           to="/login"
-          aria-label="Đăng nhập"
+          aria-label={t('layout.login')}
           className="flex h-11 w-11 items-center justify-center rounded-full text-ink-muted
                      hover:bg-surface-sunken hover:text-ink md:hidden"
         >
           <Icon name="user" size={22} />
         </Link>
         <Link to="/login" className={buttonClass({ variant: 'ghost', size: 'sm', className: 'hidden md:inline-flex' })}>
-          Đăng nhập
+          {t('layout.login')}
         </Link>
         <Link to="/register" className={buttonClass({ size: 'sm', className: 'hidden md:inline-flex' })}>
-          Đăng ký
+          {t('layout.register')}
         </Link>
       </div>
     );
@@ -111,12 +117,12 @@ function AccountArea() {
       <button
         type="button"
         onClick={logout}
-        aria-label="Đăng xuất"
+        aria-label={t('layout.logout')}
         className="flex h-11 min-w-11 items-center justify-center gap-1.5 rounded-full px-2.5 text-small font-semibold text-ink-muted
                    transition-colors duration-fast hover:bg-surface-sunken hover:text-ink"
       >
         <Icon name="logout" size={20} />
-        <span className="hidden md:inline">Đăng xuất</span>
+        <span className="hidden md:inline">{t('layout.logout')}</span>
       </button>
     </div>
   );

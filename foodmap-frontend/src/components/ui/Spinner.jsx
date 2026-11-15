@@ -1,3 +1,5 @@
+import { useI18n } from '../../i18n';
+
 const sizes = {
   sm: 'w-4 h-4 border-2',
   md: 'w-6 h-6 border-2',
@@ -11,11 +13,12 @@ const tones = {
 };
 
 export default function Spinner({ size = 'md', tone = 'brand', className = '' }) {
+  const { t } = useI18n();
   return (
     <span
       className={`inline-block animate-spin rounded-full border-t-transparent ${tones[tone]} ${sizes[size]} ${className}`}
       role="status"
-      aria-label="Đang tải"
+      aria-label={t('common.loading')}
       // Keeps spinning (slowed) under prefers-reduced-motion — see index.css
       data-motion="essential"
     />

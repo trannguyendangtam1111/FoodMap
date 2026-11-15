@@ -3,7 +3,7 @@ import { Link, useNavigationType, useSearchParams } from 'react-router-dom';
 import MapView from '../components/map/MapView';
 import SearchBar from '../components/search/SearchBar';
 import AppHeader from '../components/layout/AppHeader';
-import { SEARCH_INPUT_ID, SEARCH_PLACEHOLDER } from '../components/search/SiteSearch';
+import { SEARCH_INPUT_ID } from '../components/search/SiteSearch';
 import MobileBottomNav from '../components/layout/MobileBottomNav';
 import ActiveDishFilter from '../components/search/ActiveDishFilter';
 import RestaurantCard from '../components/restaurant/RestaurantCard';
@@ -25,21 +25,22 @@ import { distanceFromUserKm, rankRestaurants } from '../utils/ranking';
 import { countFoods, foodCountText, matchesFood } from '../utils/mapFood';
 import { scopeSearch } from '../utils/scope';
 import Icon from '../components/ui/Icon';
+import { useI18n } from '../i18n';
 
 // Sorting is relative to the map centre (where the user is looking), which is
 // why "Gần nhất" carries a clarifying tooltip.
 const SORT_OPTIONS = [
-  { value: 'best',      label: 'Phù hợp',  title: 'Phù hợp nhất' },
-  { value: 'closest',   label: 'Gần nhất', title: 'Gần tâm bản đồ nhất' },
-  { value: 'top_rated', label: 'Điểm cao', title: 'Đánh giá cao nhất' },
+  { value: 'best',      labelKey: 'map.sort.best',     titleKey: 'map.sort.bestTitle' },
+  { value: 'closest',   labelKey: 'map.sort.closest',  titleKey: 'map.sort.closestTitle' },
+  { value: 'top_rated', labelKey: 'map.sort.topRated', titleKey: 'map.sort.topRatedTitle' },
 ];
 // "Món" mode adds no rating surface: the rating sort is not offered there.
 const FOOD_SORT_OPTIONS = SORT_OPTIONS.filter((opt) => opt.value !== 'top_rated');
 
 // How the map is read: by restaurant (the original map) or by food.
 const MODE_OPTIONS = [
-  { value: 'restaurants', label: 'Quán' },
-  { value: 'food',        label: 'Món' },
+  { value: 'restaurants', labelKey: 'map.mode.restaurants' },
+  { value: 'food',        labelKey: 'map.mode.food' },
 ];
 
 // The settled count is announced once the map has been still this long.
@@ -71,6 +72,7 @@ const ASIDE_MOBILE_MAP = `absolute inset-x-0 bottom-0 z-20 flex max-h-[75%] flex
  * Desktop keeps the sidebar.
  */
 export default function MapPage() {
+  const { t, lang } = useI18n();
   const navigationType = useNavigationType();
   const [searchParams, setSearchParams] = useSearchParams();
   const urlQuery = searchParams.get('q');
@@ -381,28 +383,30 @@ export default function MapPage() {
   // "indexing" instead of the misleading "0 restaurants in view".
   const isColdRegion = count === 0 && indexingCells > 0 && !searchQuery && !activeDish;
   const sidebarLabel = isLoading
-    ? (searchQuery ? `Đang tìm “${searchQuery}”…` : 'Đang tải quán ăn…')
+    ? (searchQuery ? t('map.searching', { q: searchQuery }) : t('map.loadingPlaces'))
     : error && count === 0
     ? null                                   // the one error message is below
     : searchQuery
-    ? `${count} kết quả cho “${searchQuery}”`
+    ? t('map.resultsFor', { count, q: searchQuery })
     : activeDish
-    ? `${count} quán có món ${activeDish.name}`
+    ? t('map.withDish', { count, dish: activeDish.name })
     : isColdRegion
-    ? 'Đang cập nhật khu vực này…'
-    : `${count} quán trong khung bản đồ`;
+    ? t('map.updatingArea')
+    : t('map.inFrame', { count });
 
   const foodCount = foodKey ? foodCountText(matches.length, selectedFood.label) : null;
 
   // What the screen reader hears: the settled count only, never "loading" on
   // every pan. Back to the map starts with it already said.
   const settledText = isLoading ? null : (foodCount ?? sidebarLabel);
-  const [announced, setAnnounced] = useState(() => (restored ? settledText ?? '' : ''));
+  // Kept with its language: after a switch the old-language count is dropped
+  // until the next settle announces it in the new one.
+  const [announced, setAnnounced] = useState(() => ({ text: restored ? settledText ?? '' : '', lang }));
   useEffect(() => {
     if (settledText == null) return undefined;
-    const t = setTimeout(() => setAnnounced(settledText), ANNOUNCE_DELAY_MS);
+    const t = setTimeout(() => setAnnounced({ text: settledText, lang }), ANNOUNCE_DELAY_MS);
     return () => clearTimeout(t);
-  }, [settledText]);
+  }, [settledText, lang]);
 
   const { scope } = useLocationScope();
   const foodPageHref = foodKey ? `/mon/${encodeURIComponent(foodKey)}${scopeSearch(scope)}` : null;
@@ -427,7 +431,7 @@ export default function MapPage() {
   );
 
   const errorNotice = error && !isLoading && (
-    <RetryNotice title="Không tải được danh sách quán" error={error} onRetry={retry} className="p-3" />
+    <RetryNotice title={t('map.listFailed')} error={error} onRetry={retry} className="p-3" />
   );
 
   return (
@@ -442,7 +446,6 @@ export default function MapPage() {
         search={
           <SearchBar
             inputId={SEARCH_INPUT_ID}
-            placeholder={SEARCH_PLACEHOLDER}
             onDishSelect={handleDishSelect}
             onSearch={handleSearch}
             onClear={handleClearSearch}
@@ -463,7 +466,7 @@ export default function MapPage() {
         <aside
           ref={asideRef}
           data-map-panel
-          aria-label={isMobile ? (listView ? 'Danh sách quán' : 'Bảng điều khiển bản đồ') : undefined}
+          aria-label={isMobile ? (listView ? t('map.panelList') : t('map.panelControls')) : undefined}
           className={!isMobile ? ASIDE_DESKTOP : listView ? ASIDE_MOBILE_LIST : ASIDE_MOBILE_MAP}
         >
 
@@ -473,7 +476,7 @@ export default function MapPage() {
 
           {/* Mode — "Quán" / "Món" (and, on the phone map, the list switch) */}
           <div className={`border-b border-line bg-surface px-3 py-2 ${isMobile ? 'flex items-center justify-between gap-2' : ''}`}>
-            <ScopeBar value={mode} onChange={handleModeChange} options={MODE_OPTIONS} legend="Xem bản đồ theo" />
+            <ScopeBar value={mode} onChange={handleModeChange} options={MODE_OPTIONS} legend={t('map.viewBy')} />
             {panelView && <ViewToggle toList onClick={handleViewToggle} />}
           </div>
 
@@ -491,7 +494,7 @@ export default function MapPage() {
 
           {/* Phone map: the selected restaurant's card takes the header's place */}
           {panelView && selectedRestaurant ? (
-            <section data-map-preview aria-label="Quán đang chọn" className="border-b border-line bg-surface">
+            <section data-map-preview aria-label={t('map.selectedPlace')} className="border-b border-line bg-surface">
               <MapPopupCard
                 variant="sheet"
                 restaurant={selectedRestaurant}
@@ -522,7 +525,7 @@ export default function MapPage() {
                   className="inline-flex min-h-11 items-center gap-1 text-small font-semibold text-brand-700
                              hover:text-brand-800 hover:underline"
                 >
-                  Xem trang món {selectedFood.label}
+                  {t('map.viewFoodPage', { food: selectedFood.label })}
                 </Link>
                 <button
                   type="button"
@@ -530,7 +533,7 @@ export default function MapPage() {
                   className="inline-flex min-h-11 items-center text-small font-semibold text-ink-muted
                              hover:text-ink hover:underline"
                 >
-                  Bỏ chọn món
+                  {t('map.clearFood')}
                 </button>
                 {/* the phone map has no list below: the empty state's action lives here */}
                 {panelView && matches.length === 0 && !isLoading && !error && (
@@ -540,7 +543,7 @@ export default function MapPage() {
                     className="inline-flex min-h-11 items-center text-small font-semibold text-brand-700
                                hover:text-brand-800 hover:underline"
                   >
-                    Thu nhỏ bản đồ
+                    {t('map.zoomOut')}
                   </button>
                 )}
               </div>
@@ -561,13 +564,13 @@ export default function MapPage() {
                 )}
               </div>
               {mode === 'food' && catalogState.status === 'ready' && (
-                <p className="mt-1 text-small text-ink-muted">Chọn một món để làm nổi bật quán có món đó.</p>
+                <p className="mt-1 text-small text-ink-muted">{t('map.pickFoodHint')}</p>
               )}
             </div>
           )}
 
           {/* Settled count for screen readers (announced once per settle) */}
-          <p className="sr-only" aria-live="polite" data-map-announcer>{announced}</p>
+          <p className="sr-only" aria-live="polite" data-map-announcer>{announced.lang === lang ? announced.text : ''}</p>
 
           {/* Phone map: the one error message, in the panel */}
           {panelView && errorNotice && <div className="px-3 pt-3">{errorNotice}</div>}
@@ -576,12 +579,12 @@ export default function MapPage() {
             <>
               {/* Sort selector — only when we have results to sort */}
               {count > 0 && (
-                <div role="group" aria-label="Sắp xếp" className="flex items-center gap-1 border-b border-line bg-surface px-3 py-2">
+                <div role="group" aria-label={t('map.sort')} className="flex items-center gap-1 border-b border-line bg-surface px-3 py-2">
                   {(mode === 'food' ? FOOD_SORT_OPTIONS : SORT_OPTIONS).map((opt) => (
                     <button
                       key={opt.value}
                       type="button"
-                      title={opt.title}
+                      title={t(opt.titleKey)}
                       aria-pressed={effectiveSort === opt.value}
                       onClick={() => setSortMode(opt.value)}
                       className={`flex-1 whitespace-nowrap rounded-full px-2 py-1.5 text-label transition-colors duration-fast
@@ -590,7 +593,7 @@ export default function MapPage() {
                                     ? 'bg-brand-100 text-brand-800'
                                     : 'font-normal text-ink-muted hover:bg-surface-sunken hover:text-ink'}`}
                     >
-                      {opt.label}
+                      {t(opt.labelKey)}
                     </button>
                   ))}
                 </div>
@@ -614,17 +617,17 @@ export default function MapPage() {
                     {matches.length > 0 ? (
                       <section aria-labelledby="map-food-matches" className="space-y-2">
                         <h3 id="map-food-matches" className="px-1 pt-1 text-small font-bold text-ink">
-                          Có {selectedFood.label} ({matches.length})
+                          {t('map.hasFood', { food: selectedFood.label, count: matches.length })}
                         </h3>
                         {matches.map(renderCard)}
                       </section>
                     ) : !error && (
                       <EmptyMessage
                         icon="utensils"
-                        title={`Khung bản đồ này chưa có quán ${selectedFood.label} nào FoodMap biết.`}
+                        title={t('map.noFoodInFrame', { food: selectedFood.label })}
                         actions={[
-                          { label: 'Thu nhỏ bản đồ', onClick: handleZoomOut },
-                          { label: `Xem trang món ${selectedFood.label}`, to: foodPageHref },
+                          { label: t('map.zoomOut'), onClick: handleZoomOut },
+                          { label: t('map.viewFoodPage', { food: selectedFood.label }), to: foodPageHref },
                         ]}
                       />
                     )}
@@ -638,7 +641,7 @@ export default function MapPage() {
                         >
                           <Icon name="chevron-left" size={16} strokeWidth={2.5}
                                 className="rotate-180 transition-transform duration-fast group-open:-rotate-90" />
-                          Quán khác trong khung ({others.length})
+                          {t('map.othersInFrame', { count: others.length })}
                         </summary>
                         <div className="mt-1 space-y-2">{others.map(renderCard)}</div>
                       </details>
@@ -702,7 +705,7 @@ export default function MapPage() {
                               shadow-e2 backdrop-blur-sm">
                 <span aria-hidden="true" className="h-2 w-2 rounded-full bg-warning animate-pulse" />
                 <span className="text-label">
-                  Đang cập nhật khu vực này — quay lại sau ít phút để thấy thêm quán
+                  {t('map.updatingBanner')}
                 </span>
               </div>
             </div>
@@ -719,6 +722,7 @@ export default function MapPage() {
 
 /** The phone's "Danh sách" / "Bản đồ" switch (names the view it opens). */
 function ViewToggle({ toList = false, onClick, className = '' }) {
+  const { t } = useI18n();
   return (
     <button
       type="button"
@@ -730,19 +734,20 @@ function ViewToggle({ toList = false, onClick, className = '' }) {
                   focus-visible:outline-brand-700 ${className}`}
     >
       <Icon name={toList ? 'utensils' : 'map'} size={16} strokeWidth={2.25} />
-      {toList ? 'Danh sách' : 'Bản đồ'}
+      {toList ? t('map.toggle.list') : t('map.toggle.map')}
     </button>
   );
 }
 
 function EmptyState({ isDishFilter, isSearchMode, isIndexing, searchQuery, onClearFilter, onClearSearch }) {
+  const { t } = useI18n();
   if (isSearchMode) {
     return (
       <EmptyMessage
         icon="search"
-        title={<>Không tìm thấy quán nào cho <span className="text-ink">“{searchQuery}”</span></>}
-        body="Thử từ khoá khác, hoặc xoá tìm kiếm để xem quán trên bản đồ."
-        actions={[{ label: 'Xoá tìm kiếm', onClick: onClearSearch }]}
+        title={<>{t('map.empty.searchTitle')}<span className="text-ink">“{searchQuery}”</span></>}
+        body={t('map.empty.searchBody')}
+        actions={[{ label: t('search.clear'), onClick: onClearSearch }]}
       />
     );
   }
@@ -751,8 +756,8 @@ function EmptyState({ isDishFilter, isSearchMode, isIndexing, searchQuery, onCle
     return (
       <EmptyMessage
         icon="utensils"
-        title="Chưa có quán nào có món này"
-        actions={[{ label: 'Bỏ lọc món', onClick: onClearFilter }]}
+        title={t('map.empty.dishTitle')}
+        actions={[{ label: t('search.clearDishFilter'), onClick: onClearFilter }]}
       />
     );
   }
@@ -766,8 +771,8 @@ function EmptyState({ isDishFilter, isSearchMode, isIndexing, searchQuery, onCle
         icon="clock"
         tone="warning"
         pulse
-        title="Đang cập nhật khu vực này…"
-        body="FoodMap đang tìm quán quanh đây — quay lại sau ít phút nhé."
+        title={t('map.updatingArea')}
+        body={t('map.empty.indexingBody')}
       />
     );
   }
@@ -775,8 +780,8 @@ function EmptyState({ isDishFilter, isSearchMode, isIndexing, searchQuery, onCle
   return (
     <EmptyMessage
       icon="map-pin"
-      title="Khu vực này chưa có quán nào"
-      body="Thử kéo hoặc phóng to, thu nhỏ bản đồ để khám phá."
+      title={t('map.empty.areaTitle')}
+      body={t('map.empty.areaBody')}
     />
   );
 }

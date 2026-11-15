@@ -3,6 +3,7 @@ import StarRating from '../ui/StarRating';
 import Badge from '../ui/Badge';
 import Icon from '../ui/Icon';
 import { formatRelativeTime } from '../../utils/format';
+import { useI18n } from '../../i18n';
 
 /**
  * ReviewItem — renders a single review card.
@@ -14,6 +15,7 @@ import { formatRelativeTime } from '../../utils/format';
  * onDelete     (reviewId) => void — called after the user confirms deletion
  */
 export default function ReviewItem({ review, isOwn = false, onDelete }) {
+  const { t } = useI18n();
   const { id, user, rating, comment, food, createdAt } = review;
   const [confirming, setConfirming] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -55,10 +57,10 @@ export default function ReviewItem({ review, isOwn = false, onDelete }) {
           <div className="min-w-0">
             <p className="flex flex-wrap items-center gap-2 text-body font-semibold text-ink">
               {user.displayName}
-              {isOwn && <Badge variant="brand">Bạn</Badge>}
+              {isOwn && <Badge variant="brand">{t('review.you')}</Badge>}
             </p>
             {food && (
-              <p className="mt-0.5 text-small text-brand-700">về món {food.name}</p>
+              <p className="mt-0.5 text-small text-brand-700">{t('review.aboutDish', { dish: food.name })}</p>
             )}
           </div>
 
@@ -72,7 +74,7 @@ export default function ReviewItem({ review, isOwn = false, onDelete }) {
                 onClick={handleDeleteClick}
                 className="rounded-full p-1.5 text-ink-subtle transition-colors duration-fast
                            hover:bg-danger-tint hover:text-danger-ink"
-                aria-label="Xoá đánh giá"
+                aria-label={t('review.delete')}
               >
                 <Icon name="trash" size={16} strokeWidth={2} />
               </button>
@@ -89,7 +91,7 @@ export default function ReviewItem({ review, isOwn = false, onDelete }) {
         {/* ── Delete confirmation inline ─────────────────────────────────── */}
         {confirming && (
           <div className="mt-3 flex flex-wrap items-center gap-3 rounded-field bg-danger-tint px-3 py-2">
-            <p className="text-small text-danger-ink">Xoá đánh giá này?</p>
+            <p className="text-small text-danger-ink">{t('review.deleteConfirm')}</p>
             <button
               type="button"
               onClick={handleConfirm}
@@ -97,7 +99,7 @@ export default function ReviewItem({ review, isOwn = false, onDelete }) {
               className="rounded-tag text-small font-semibold text-danger-ink underline-offset-2
                          hover:underline disabled:opacity-50"
             >
-              {isDeleting ? 'Đang xoá…' : 'Xoá'}
+              {isDeleting ? t('review.deleting') : t('review.deleteShort')}
             </button>
             <button
               type="button"
@@ -105,7 +107,7 @@ export default function ReviewItem({ review, isOwn = false, onDelete }) {
               disabled={isDeleting}
               className="rounded-tag text-small text-ink-muted hover:text-ink"
             >
-              Huỷ
+              {t('review.cancel')}
             </button>
           </div>
         )}

@@ -1,5 +1,6 @@
 import { Link, NavLink } from 'react-router-dom';
 import Icon from '../ui/Icon';
+import { useI18n } from '../../i18n';
 
 const tabClass = ({ isActive }) =>
   `flex h-16 flex-col items-center justify-center gap-0.5 text-label transition-colors duration-fast ${
@@ -14,9 +15,10 @@ const tabClass = ({ isActive }) =>
  * homepage (/#an-gi).
  */
 export default function MobileBottomNav() {
+  const { t } = useI18n();
   return (
     <nav
-      aria-label="Điều hướng"
+      aria-label={t('layout.nav')}
       className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95
                  pb-[env(safe-area-inset-bottom)] backdrop-blur-sm md:hidden"
     >
@@ -24,14 +26,14 @@ export default function MobileBottomNav() {
         <li>
           <NavLink to="/" end className={tabClass}>
             <Icon name="home" size={22} />
-            Trang chủ
+            {t('layout.home')}
           </NavLink>
         </li>
 
         <li className="flex justify-center">
           <Link
             to={{ pathname: '/', hash: '#an-gi' }}
-            aria-label="Ăn gì hôm nay?"
+            aria-label={t('layout.whatToEatToday')}
             className="relative -mt-6 flex flex-col items-center gap-1"
           >
             <span
@@ -40,14 +42,14 @@ export default function MobileBottomNav() {
             >
               <Icon name="tiffin" size={26} />
             </span>
-            <span className="text-label text-ink">Ăn gì?</span>
+            <span className="text-label text-ink">{t('layout.whatToEat')}</span>
           </Link>
         </li>
 
         <li>
           <NavLink to="/map" className={tabClass}>
             <Icon name="map" size={22} />
-            Bản đồ
+            {t('layout.map')}
           </NavLink>
         </li>
       </ul>

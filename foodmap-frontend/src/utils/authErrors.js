@@ -1,5 +1,5 @@
 /**
- * Turns a failed login/register request into Vietnamese UI copy.
+ * Turns a failed login/register request into localized UI copy (EN/VI).
  *
  * Server text is never shown as-is: backend messages are English and a 5xx
  * carries only a generic "An unexpected error occurred.". Every outcome maps
@@ -7,32 +7,35 @@
  *
  * Plain ESM, no React — unit-tested on its own.
  */
+import { t } from '../i18n';
 
+// Getters: each read returns the copy in the current UI language.
 export const AUTH_COPY = Object.freeze({
-  serverDown: 'Hệ thống đang gặp sự cố, bạn thử lại sau nhé.',
-  emailTaken: 'Email này đã được đăng ký.',
-  badCredentials: 'Email hoặc mật khẩu chưa đúng.',
-  registerFallback: 'Đăng ký chưa thành công. Bạn kiểm tra lại thông tin nhé.',
-  loginFallback: 'Đăng nhập chưa thành công. Bạn kiểm tra lại thông tin nhé.',
+  get serverDown() { return t('auth.err.serverDown'); },
+  get emailTaken() { return t('auth.err.emailTaken'); },
+  get badCredentials() { return t('auth.err.badCredentials'); },
+  get registerFallback() { return t('auth.err.registerFallback'); },
+  get loginFallback() { return t('auth.err.loginFallback'); },
 });
 
 // Backend Bean Validation messages (RegisterRequest / LoginRequest) → copy.
 // `default` covers any other constraint on the same field (e.g. @Size(max)).
+// Values are i18n keys, resolved when the error is described.
 const FIELD_COPY = {
   email: {
-    'Email must not be blank': 'Vui lòng nhập email.',
-    'Email must be a valid address': 'Email không hợp lệ.',
-    default: 'Email không hợp lệ.',
+    'Email must not be blank': 'auth.err.emailRequired',
+    'Email must be a valid address': 'auth.err.emailInvalid',
+    default: 'auth.err.emailInvalid',
   },
   password: {
-    'Password must not be blank': 'Vui lòng nhập mật khẩu.',
-    'Password must be between 8 and 100 characters': 'Mật khẩu cần từ 8 đến 100 ký tự.',
-    default: 'Mật khẩu không hợp lệ.',
+    'Password must not be blank': 'auth.err.passwordRequired',
+    'Password must be between 8 and 100 characters': 'auth.err.passwordLength',
+    default: 'auth.err.passwordInvalid',
   },
   displayName: {
-    'Display name must not be blank': 'Vui lòng nhập tên hiển thị.',
-    'Display name must be between 2 and 100 characters': 'Tên hiển thị cần từ 2 đến 100 ký tự.',
-    default: 'Tên hiển thị không hợp lệ.',
+    'Display name must not be blank': 'auth.err.displayNameRequired',
+    'Display name must be between 2 and 100 characters': 'auth.err.displayNameLength',
+    default: 'auth.err.displayNameInvalid',
   },
 };
 
@@ -41,7 +44,7 @@ function mapFieldErrors(fieldErrors) {
   const mapped = {};
   for (const [field, serverMessage] of Object.entries(fieldErrors)) {
     const copy = FIELD_COPY[field];
-    if (copy) mapped[field] = copy[serverMessage] ?? copy.default;
+    if (copy) mapped[field] = t(copy[serverMessage] ?? copy.default);
   }
   return Object.keys(mapped).length ? mapped : null;
 }

@@ -9,6 +9,7 @@ import FoodPage from '../pages/FoodPage';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
 import NotFoundPage from '../pages/NotFoundPage';
+import { useI18n } from '../i18n';
 
 // The map page is the only route that loads Goong GL. Lazy-loading it keeps
 // the map library out of every other route — "/" in particular must never
@@ -16,6 +17,7 @@ import NotFoundPage from '../pages/NotFoundPage';
 const MapPage = lazy(() => import('../pages/MapPage'));
 
 export default function AppRouter() {
+  const { t } = useI18n();
   return (
     <Routes>
       {/* Standard pages: header + content + footer + mobile bottom nav */}
@@ -30,7 +32,7 @@ export default function AppRouter() {
           element={
             <ProtectedRoute>
               {/* ProfilePage placeholder */}
-              <p className="px-4 py-24 text-center text-body text-ink-muted">Trang cá nhân sắp ra mắt.</p>
+              <p className="px-4 py-24 text-center text-body text-ink-muted">{t('layout.profileSoon')}</p>
             </ProtectedRoute>
           }
         />

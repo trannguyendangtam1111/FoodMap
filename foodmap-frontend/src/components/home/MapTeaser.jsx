@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import Icon from '../ui/Icon';
 import { buttonClass } from '../ui/Button';
+import { useI18n } from '../../i18n';
 
 /**
  * Static teaser for the map page. Purely illustrative — it does NOT load
@@ -8,17 +9,18 @@ import { buttonClass } from '../ui/Button';
  * decoration in the same style as the real map pins, not real places.
  */
 export default function MapTeaser() {
+  const { t } = useI18n();
   return (
     <section aria-labelledby="map-teaser-title" className="mx-auto max-w-6xl px-4 py-8 lg:py-10">
       <div className="grid overflow-hidden rounded-panel border border-line bg-surface lg:grid-cols-2">
         <div className="flex flex-col items-start justify-center gap-4 p-6 sm:p-10">
-          <h2 id="map-teaser-title" className="font-display text-h2 text-ink">Khám phá trên bản đồ</h2>
+          <h2 id="map-teaser-title" className="font-display text-h2 text-ink">{t('home.teaserTitle')}</h2>
           <p className="max-w-md text-body text-ink-muted">
-            Kéo, phóng to và xem quán quanh khu bạn ở — từ quán bún đầu hẻm đến quán cà phê quen.
+            {t('home.teaserBody')}
           </p>
           <Link to="/map" className={buttonClass({ className: 'mt-1' })}>
             <Icon name="map" size={18} strokeWidth={2} />
-            Khám phá bản đồ
+            {t('home.teaserCta')}
           </Link>
         </div>
 

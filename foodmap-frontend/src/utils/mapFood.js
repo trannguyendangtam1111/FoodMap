@@ -1,3 +1,5 @@
+import { t } from '../i18n';
+
 /**
  * Food on the /map page — pure helpers over data the page already has.
  *
@@ -65,5 +67,5 @@ export function pinAppearance(restaurant, { foodKey = null, selected = false } =
 
 /** "4 quán có Phở trong khung bản đồ" — the count always names its scope. */
 export function foodCountText(count, label) {
-  return `${count} quán có ${label} trong khung bản đồ`;
+  return t('map.foodCount', { count, label });
 }

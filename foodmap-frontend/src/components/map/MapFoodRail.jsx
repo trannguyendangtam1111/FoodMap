@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import FoodArt from '../art/FoodArt';
 import Skeleton from '../ui/Skeleton';
 import RetryNotice from '../food/RetryNotice';
+import { useI18n } from '../../i18n';
 
 /**
  * The food rail of the map's "Món" mode: the catalog's discoverable foods,
@@ -16,6 +17,7 @@ import RetryNotice from '../food/RetryNotice';
  *   counts     Map foodKey → count in the current viewport payload
  */
 export default function MapFoodRail({ status, foods, counts, selectedKey, onSelect, error, onRetry }) {
+  const { t } = useI18n();
   // The chosen food stays in sight on a narrow rail (deep link, Back, a
   // rotation that changes the rail's width): the rail scrolls sideways only —
   // never the page.
@@ -40,7 +42,7 @@ export default function MapFoodRail({ status, foods, counts, selectedKey, onSele
   if (status === 'error') {
     return (
       <div className="border-b border-line bg-surface px-3 py-3">
-        <RetryNotice title="Chưa tải được danh sách món." error={error} onRetry={onRetry} className="p-3" />
+        <RetryNotice title={t('mapRail.loadFailed')} error={error} onRetry={onRetry} className="p-3" />
       </div>
     );
   }
@@ -48,7 +50,7 @@ export default function MapFoodRail({ status, foods, counts, selectedKey, onSele
   if (status !== 'ready') {
     return (
       <div className="border-b border-line bg-surface px-3 py-2" aria-busy="true">
-        <p className="sr-only">Đang tải danh sách món…</p>
+        <p className="sr-only">{t('mapRail.loading')}</p>
         <ul className="flex gap-2 overflow-hidden" aria-hidden="true">
           {Array.from({ length: 6 }, (_, i) => (
             <li key={i} data-rail-skeleton className="flex w-[4.25rem] flex-shrink-0 flex-col items-center gap-1 py-1">
@@ -65,7 +67,7 @@ export default function MapFoodRail({ status, foods, counts, selectedKey, onSele
     <div className="border-b border-line bg-surface">
       <ul
         ref={railRef}
-        aria-label="Chọn món"
+        aria-label={t('mapRail.label')}
         className="relative flex snap-x gap-1 overflow-x-auto overscroll-x-contain scroll-px-3 px-3 pb-2 pt-2"
       >
         {foods.map((food) => {
@@ -77,7 +79,7 @@ export default function MapFoodRail({ status, foods, counts, selectedKey, onSele
                 type="button"
                 data-food-chip={food.key}
                 aria-pressed={pressed}
-                aria-label={`${food.label}, ${count > 0 ? `${count} quán` : 'chưa có quán'} trong khung bản đồ`}
+                aria-label={count > 0 ? t('mapRail.chip', { food: food.label, count }) : t('mapRail.chipNone', { food: food.label })}
                 onClick={() => onSelect(pressed ? null : food.key)}
                 className={`flex min-h-11 w-[4.25rem] flex-col items-center gap-1 rounded-tile border-2 px-1 py-1
                             text-center transition-colors duration-fast ease-standard

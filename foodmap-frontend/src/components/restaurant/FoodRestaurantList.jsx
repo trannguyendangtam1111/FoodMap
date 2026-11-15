@@ -6,6 +6,7 @@ import Skeleton from '../ui/Skeleton';
 import RestaurantThumb from './RestaurantThumb';
 import RestaurantMeta from './RestaurantMeta';
 import { categoryOf } from '../../utils/category';
+import { getLang, t, useI18n } from '../../i18n';
 
 /**
  * FoodRestaurantList — the food page's list: the restaurants FoodMap knows to
@@ -21,12 +22,15 @@ import { categoryOf } from '../../utils/category';
 
 /** Why the restaurant is listed for the food, from the server's evidence. */
 export function evidenceText(evidence, foodLabel) {
-  if (evidence?.source === 'MENU' && evidence.dishName) return `Thực đơn có ${evidence.dishName}`;
-  if (evidence?.source === 'NAME' && foodLabel) return `Tên quán cho thấy có ${foodLabel.toLocaleLowerCase('vi')}`;
+  if (evidence?.source === 'MENU' && evidence.dishName) return t('evidence.menu', { dish: evidence.dishName });
+  if (evidence?.source === 'NAME' && foodLabel) {
+    return t('evidence.name', { food: getLang() === 'vi' ? foodLabel.toLocaleLowerCase('vi') : foodLabel });
+  }
   return null;
 }
 
 export default function FoodRestaurantList({ items, foodKey, foodLabel, labelledBy, hasMore, loadingMore, moreError, onLoadMore }) {
+  useI18n();
   const listRef = useRef(null);
   const focusFrom = useRef(null);
 
@@ -52,7 +56,7 @@ export default function FoodRestaurantList({ items, foodKey, foodLabel, labelled
         ))}
       </ul>
       {moreError && (
-        <p className="mt-3 text-small text-ink-muted">Chưa tải thêm được quán, bạn thử lại nhé.</p>
+        <p className="mt-3 text-small text-ink-muted">{t('list.moreFailed')}</p>
       )}
       {hasMore && (
         <Button
@@ -61,7 +65,7 @@ export default function FoodRestaurantList({ items, foodKey, foodLabel, labelled
           aria-disabled={loadingMore || undefined}
           className={`mt-4 w-full scroll-mb-bottom-nav sm:w-auto ${loadingMore ? 'opacity-60' : ''}`}
         >
-          {loadingMore ? 'Đang tải thêm quán…' : 'Xem thêm quán'}
+          {loadingMore ? t('list.loadingMore') : t('list.more')}
         </Button>
       )}
     </>
@@ -69,6 +73,7 @@ export default function FoodRestaurantList({ items, foodKey, foodLabel, labelled
 }
 
 function FoodRestaurantRow({ item, foodKey, foodLabel }) {
+  useI18n();
   const { restaurant, distanceMeters, evidence } = item;
   const why = evidenceText(evidence, foodLabel);
   return (

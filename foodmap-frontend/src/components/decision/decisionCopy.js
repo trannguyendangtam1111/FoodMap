@@ -1,19 +1,20 @@
-import { inSentence } from '../../utils/scope';
+import { inSentence, scopeDtoLabel } from '../../utils/scope';
+import { t } from '../../i18n';
 
 /**
  * Copy shared by the "Ăn gì hôm nay?" presentations (Master Specification
  * §17). Each presentation names its own action; the meaning is the same.
  */
 export const TIFFIN_WORDS = Object.freeze({
-  timeout: 'Cà mèn mở hơi lâu. Thử lại nhé.',
-  failed: 'Chưa mở được cà mèn. Thử lại nhé.',
-  tooFast: 'Bạn mở nhanh quá',
+  get timeout() { return t('decision.tiffin.timeout'); },
+  get failed() { return t('decision.tiffin.failed'); },
+  get tooFast() { return t('decision.tiffin.tooFast'); },
 });
 
 export const ROLL_WORDS = Object.freeze({
-  timeout: 'Roll chạy hơi lâu. Thử lại nhé.',
-  failed: 'Roll chưa chạy được. Thử lại nhé.',
-  tooFast: 'Bạn bấm nhanh quá',
+  get timeout() { return t('decision.roll.timeout'); },
+  get failed() { return t('decision.roll.failed'); },
+  get tooFast() { return t('decision.roll.tooFast'); },
 });
 
 /**
@@ -25,17 +26,17 @@ export function describeDecisionError(error, waitSeconds = null, words = TIFFIN_
   if (error?.status === 429) {
     if (Number.isFinite(error.retryAfterSeconds) && error.retryAfterSeconds > 0) {
       const s = waitSeconds ?? error.retryAfterSeconds;
-      return s > 0 ? `${words.tooFast}, đợi ${s} giây nhé.` : 'Giờ bạn thử lại được rồi.';
+      return s > 0 ? t('decision.waitSeconds', { tooFast: words.tooFast, count: s }) : t('decision.canRetry');
     }
-    return `${words.tooFast}, đợi một chút nhé.`;
+    return t('decision.waitMoment', { tooFast: words.tooFast });
   }
   return words.failed;
 }
 
 /** Why there is no food: nothing in this scope, or every food already shown. */
 export function describeEmpty(empty) {
-  const phrase = inSentence(empty?.scope?.label) || 'quanh đây';
+  const phrase = inSentence(scopeDtoLabel(empty?.scope)) || t('decision.aroundHere');
   return empty?.emptyReason === 'ALL_SHOWN'
-    ? `Bạn đã xem hết các món ${phrase}.`
-    : `Chưa có món nào FoodMap biết ${phrase}.`;
+    ? t('decision.allShown', { phrase })
+    : t('decision.noFood', { phrase });
 }

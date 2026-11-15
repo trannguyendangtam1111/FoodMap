@@ -1,3 +1,5 @@
+import { getLocale, t } from '../i18n';
+
 /**
  * Restaurant ranking utilities for the discovery sidebar.
  *
@@ -59,12 +61,13 @@ function bayesianRating(r) {
  *   ≥1km  → "1,4 km"
  */
 export function formatDistance(km) {
+  const locale = getLocale();
   if (km == null || !Number.isFinite(km) || km < 0) return null;
   const metres = km * 1000;
-  if (metres < 10) return 'dưới 10 m';
+  if (metres < 10) return t('common.distanceUnder10m');
   const rounded = Math.round(metres / 10) * 10;
   if (rounded < 1000) return `${rounded} m`;
-  return `${km.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`;
+  return `${km.toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`;
 }
 
 /**

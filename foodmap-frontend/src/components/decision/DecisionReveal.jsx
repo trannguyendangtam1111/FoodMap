@@ -8,6 +8,7 @@ import RestaurantMeta from '../restaurant/RestaurantMeta';
 import DirectionsLink from '../restaurant/DirectionsLink';
 import { categoryOf, isKnownCategory } from '../../utils/category';
 import { formatDistance } from '../../utils/ranking';
+import { t, useI18n } from '../../i18n';
 
 /**
  * DecisionReveal — the restaurant that came out of the cà mèn.
@@ -50,17 +51,18 @@ const REASON_ICONS = {
  *   moodMatched false     → the requested mood was relaxed (level 1)
  */
 export function decisionContext({ locationSource, fallbackLevel, radiusMeters, moodMatched } = {}) {
-  if (locationSource === 'CITY_CENTER') return 'Bạn chưa chia sẻ vị trí, nên FoodMap gợi ý theo khu vực.';
+  if (locationSource === 'CITY_CENTER') return t('decision.ctx.cityCentre');
   if (fallbackLevel === 2 && radiusMeters > 0) {
-    return `Gần bạn ít quán, nên FoodMap đã tìm rộng hơn, trong khoảng ${formatDistance(radiusMeters / 1000)}.`;
+    return t('decision.ctx.widened', { distance: formatDistance(radiusMeters / 1000) });
   }
-  if (moodMatched === false) return 'Chưa có quán đúng món bạn chọn, đây là một quán khác gần bạn.';
+  if (moodMatched === false) return t('decision.ctx.moodRelaxed');
   return null;
 }
 
 const DecisionReveal = forwardRef(function DecisionReveal({
   decision, inert = false, animate = true, showContext = true, directions = false, linkState, className = '',
 }, headingRef) {
+  useI18n();
   const { restaurant, distanceMeters = null, reasons = [], locationSource } = decision;
   const category = categoryOf(restaurant);
   // A distance is a claim about the user — only for the user's own location.
@@ -115,7 +117,7 @@ const DecisionReveal = forwardRef(function DecisionReveal({
         <RestaurantMeta restaurant={restaurant} distanceKm={distanceKm} showUnrated={false} className="mt-2" />
 
         {chips.length > 0 && (
-          <ul aria-label="Lý do gợi ý" className="mt-3 flex flex-wrap gap-1.5">
+          <ul aria-label={t('decision.reasons')} className="mt-3 flex flex-wrap gap-1.5">
             {chips.map((r) => (
               <li key={`${r.code}-${r.label}`} className="min-w-0 max-w-full">
                 <Chip
@@ -143,7 +145,7 @@ const DecisionReveal = forwardRef(function DecisionReveal({
             state={linkState}
             className={buttonClass({ variant: 'primary', size: 'md' })}
           >
-            Xem quán
+            {t('decision.viewPlace')}
             <span className="sr-only"> {restaurant.name}</span>
             <Icon name="chevron-left" size={18} strokeWidth={2.25} className="rotate-180" />
           </Link>

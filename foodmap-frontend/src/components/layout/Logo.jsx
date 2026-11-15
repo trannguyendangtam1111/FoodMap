@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useI18n } from '../../i18n';
 
 /**
  * FoodMap mark + wordmark, always linking home.
@@ -6,10 +7,11 @@ import { Link } from 'react-router-dom';
  * search in the mobile/tablet header.
  */
 export default function Logo({ compact = false, className = '' }) {
+  const { t } = useI18n();
   return (
     <Link
       to="/"
-      aria-label="FoodMap — Trang chủ"
+      aria-label={t('layout.logoHome')}
       className={`inline-flex min-h-11 min-w-11 flex-shrink-0 items-center justify-center gap-1.5 rounded-tag
                   font-display font-black text-brand-600 ${className}`}
     >

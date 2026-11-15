@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import { useI18n } from '../../i18n';
 
 /**
  * ScopeBar — where to look: "Gần tôi", "Trung tâm", "Khu vực".
@@ -11,16 +12,18 @@ import { useId } from 'react';
  * `options` lets another page reuse the control (the map's "Quán" / "Món").
  */
 export const SCOPE_OPTIONS = [
-  { value: 'near', label: 'Gần tôi' },
-  { value: 'centre', label: 'Trung tâm' },
-  { value: 'area', label: 'Khu vực' },
+  { value: 'near', labelKey: 'scope.option.near' },
+  { value: 'centre', labelKey: 'scope.option.centre' },
+  { value: 'area', labelKey: 'scope.option.area' },
 ];
 
-export default function ScopeBar({ value, onChange, busy = false, legend = 'Tìm quanh đâu?', options = SCOPE_OPTIONS }) {
+// Options carry `labelKey` (an i18n key) or a ready `label`.
+export default function ScopeBar({ value, onChange, busy = false, legend, options = SCOPE_OPTIONS }) {
+  const { t } = useI18n();
   const name = useId();
   return (
     <fieldset className="min-w-0" aria-busy={busy || undefined}>
-      <legend className="sr-only">{legend}</legend>
+      <legend className="sr-only">{legend ?? t('scope.where')}</legend>
       <div className="inline-flex max-w-full flex-wrap gap-2">
         {options.map((option) => (
           <label key={option.value} className="relative cursor-pointer">
@@ -40,7 +43,7 @@ export default function ScopeBar({ value, onChange, busy = false, legend = 'Tìm
                          peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2
                          peer-focus-visible:outline-brand-700"
             >
-              {option.label}
+              {option.labelKey ? t(option.labelKey) : option.label}
             </span>
           </label>
         ))}

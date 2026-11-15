@@ -10,6 +10,7 @@ import useRetryWait from '../../hooks/useRetryWait';
 import { MAX_EXCLUDED_FOODS, foodResultId } from '../../hooks/useFoodDecisionSource';
 import { scopeSearchOf } from '../../utils/scope';
 import { describeDecisionError, describeEmpty } from './decisionCopy';
+import { t, useI18n } from '../../i18n';
 
 export { describeDecisionError, describeEmpty };
 
@@ -40,6 +41,7 @@ export const DECISION_ANCHOR = 'an-gi';
  * focus on rerolls.
  */
 export default function TiffinDecision({ decide, prepare, session, onBusyChange }) {
+  useI18n();
   const reducedMotion = usePrefersReducedMotion();
   const { phase, result, pending, empty, error, busy, restored, open, reroll, startOver } = useTiffinDecision({
     decide, prepare, session, reducedMotion, getResultId: foodResultId, maxExclude: MAX_EXCLUDED_FOODS,
@@ -128,11 +130,11 @@ export default function TiffinDecision({ decide, prepare, session, onBusyChange 
 function announcement(phase, result, empty, error, wait) {
   switch (phase) {
     case PHASE.LOCATING:
-      return 'Đang lấy vị trí của bạn…';
+      return t('decision.locating');
     case PHASE.DECIDING:
-      return result ? 'Đang chọn món khác…' : 'Đang chọn món cho bạn…';
+      return result ? t('decision.choosingAnother') : t('decision.choosingForYou');
     case PHASE.REVEALED:
-      return `Gợi ý: ${result.food.label}. ${supplyLine(result)}.`;
+      return t('decision.announce', { food: result.food.label, supply: supplyLine(result) });
     case PHASE.EMPTY:
       return describeEmpty(empty);
     case PHASE.ERROR:
@@ -150,9 +152,10 @@ const boxPose = (phase) => (phase === PHASE.LOCATING ? PHASE.DECIDING : phase);
 function Stage({ phase, food, empty, error, wait, busy, onOpen }) {
   const failed = phase === PHASE.EMPTY || phase === PHASE.ERROR;
   const waiting = wait > 0;
-  let copy = 'Để FoodMap chọn giúp bạn.';
-  if (phase === PHASE.LOCATING) copy = 'Đang lấy vị trí của bạn…';
-  else if (busy) copy = 'FoodMap đang chọn món cho bạn…';
+  useI18n();
+  let copy = t('decision.tiffin.hint');
+  if (phase === PHASE.LOCATING) copy = t('decision.locating');
+  else if (busy) copy = t('decision.fmChoosingForYou');
   else if (phase === PHASE.EMPTY) copy = describeEmpty(empty);
   else if (phase === PHASE.ERROR) copy = describeDecisionError(error, wait);
 
@@ -168,7 +171,7 @@ function Stage({ phase, food, empty, error, wait, busy, onOpen }) {
         artClassName="block h-32 w-auto overflow-visible sm:h-44"
       />
       <div>
-        <h2 id="decision-title" className="mt-3 font-display text-h2 text-ink sm:mt-4 md:mt-0 lg:mt-4">Ăn gì hôm nay?</h2>
+        <h2 id="decision-title" className="mt-3 font-display text-h2 text-ink sm:mt-4 md:mt-0 lg:mt-4">{t('decision.title')}</h2>
         <p id="decision-hint" className={`mt-1 text-body ${phase === PHASE.ERROR ? 'text-danger-ink' : 'text-ink-muted'}`}>
           {copy}
         </p>
@@ -182,7 +185,7 @@ function Stage({ phase, food, empty, error, wait, busy, onOpen }) {
           className="mt-4 min-w-[11rem] aria-disabled:pointer-events-none aria-disabled:opacity-80 sm:mt-5"
         >
           {busy ? <BusyMark /> : <Icon name="tiffin" size={20} strokeWidth={2} />}
-          {busy ? 'Đang chọn…' : failed ? 'Thử lại' : 'Mở cà mèn'}
+          {busy ? t('decision.choosing') : failed ? t('decision.retry') : t('decision.tiffin.open')}
         </Button>
       </div>
     </div>
@@ -192,6 +195,7 @@ function Stage({ phase, food, empty, error, wait, busy, onOpen }) {
 // ── Result: the revealed food ──────────────────────────────────────────────
 
 function Result({ phase, result, food, empty, error, wait, busy, restored, headingRef, onReroll, onStartOver }) {
+  const { lang } = useI18n();
   const exhausted = phase === PHASE.EMPTY;
   // A 400 most likely means the exclude list itself — start a clean session.
   const restart = exhausted || (phase === PHASE.ERROR && error?.status === 400);
@@ -206,9 +210,9 @@ function Result({ phase, result, food, empty, error, wait, busy, restored, headi
       <div className="flex items-center gap-3">
         <TiffinBox phase={boxPhase} food={exhausted ? null : food} className="flex-shrink-0" artClassName="block h-14 w-auto overflow-visible" />
         <div className="min-w-0">
-          <h2 id="decision-title" className="font-display text-h3 text-ink">Ăn gì hôm nay?</h2>
+          <h2 id="decision-title" className="font-display text-h3 text-ink">{t('decision.title')}</h2>
           <p className="text-small text-ink-muted">
-            {busy ? 'FoodMap đang chọn món khác…' : 'FoodMap gợi ý cho bạn'}
+            {busy ? t('decision.fmChoosingAnother') : t('decision.fmSuggests')}
           </p>
         </div>
       </div>
@@ -216,7 +220,7 @@ function Result({ phase, result, food, empty, error, wait, busy, restored, headi
       {exhausted ? (
         <div className="mt-4 rounded-tile border-2 border-dashed border-brand-300 bg-surface/80 px-5 py-6 text-center">
           <p className="font-display text-h3 text-ink">{describeEmpty(empty)}</p>
-          <p className="mt-1 text-small text-ink-muted">Xem lại từ đầu, hoặc chọn món ở mục “Thèm gì?” bên dưới.</p>
+          <p className="mt-1 text-small text-ink-muted">{t('decision.exhaustedHint')}</p>
         </div>
       ) : (
         // Keyed by decision: each new food replays the reveal.
@@ -244,7 +248,7 @@ function Result({ phase, result, food, empty, error, wait, busy, restored, headi
           className="scroll-mb-bottom-nav w-full aria-disabled:pointer-events-none sm:w-auto"
         >
           {busy ? <BusyMark /> : <Icon name="tiffin" size={18} strokeWidth={2} />}
-          {restart ? 'Xem lại từ đầu' : 'Món khác'}
+          {restart ? t('decision.startOver') : t('decision.anotherDish')}
         </Button>
         {!exhausted && (
           <Link
@@ -260,7 +264,7 @@ function Result({ phase, result, food, empty, error, wait, busy, restored, headi
             })}
           >
             <Icon name="search" size={18} strokeWidth={2} />
-            Tìm quán {shown.label.toLocaleLowerCase('vi')}
+            {t('decision.findPlaces', { food: lang === 'vi' ? shown.label.toLocaleLowerCase('vi') : shown.label })}
           </Link>
         )}
       </div>

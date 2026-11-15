@@ -8,20 +8,28 @@
  * labels.
  */
 
+import { getLang } from '../i18n';
+
+// `label` follows the UI language (vi / en); both live here, next to the tone.
+const category = (key, vi, en, tone) => Object.freeze({
+  key, tone,
+  get label() { return getLang() === 'vi' ? vi : en; },
+});
+
 // tone = Tailwind accent key from the design system (see tailwind.config.js)
 export const CATEGORIES = {
-  noodle:     { key: 'noodle',     label: 'Bún, phở, mì',      tone: 'chili' },
-  hotpot:     { key: 'hotpot',     label: 'Lẩu & nướng',       tone: 'chili' },
-  rice:       { key: 'rice',       label: 'Cơm & cháo',        tone: 'turmeric' },
-  vietnamese: { key: 'vietnamese', label: 'Món Việt',          tone: 'turmeric' },
-  bakery:     { key: 'bakery',     label: 'Bánh mì & bánh',    tone: 'crust' },
-  pizza:      { key: 'pizza',      label: 'Pizza & mì Ý',      tone: 'crust' },
-  coffee:     { key: 'coffee',     label: 'Cà phê & trà sữa',  tone: 'taro' },
-  vegetarian: { key: 'vegetarian', label: 'Món chay',          tone: 'pandan' },
-  dessert:    { key: 'dessert',    label: 'Chè & tráng miệng', tone: 'dragonfruit' },
-  japanese:   { key: 'japanese',   label: 'Món Nhật',          tone: 'dragonfruit' },
-  seafood:    { key: 'seafood',    label: 'Hải sản',           tone: 'brand' },
-  other:      { key: 'other',      label: 'Quán ăn',           tone: 'brand' },
+  noodle:     category('noodle',     'Bún, phở, mì',      'Noodles & phở',        'chili'),
+  hotpot:     category('hotpot',     'Lẩu & nướng',       'Hotpot & grill',       'chili'),
+  rice:       category('rice',       'Cơm & cháo',        'Rice & congee',        'turmeric'),
+  vietnamese: category('vietnamese', 'Món Việt',          'Vietnamese',           'turmeric'),
+  bakery:     category('bakery',     'Bánh mì & bánh',    'Bánh mì & bakery',     'crust'),
+  pizza:      category('pizza',      'Pizza & mì Ý',      'Pizza & pasta',        'crust'),
+  coffee:     category('coffee',     'Cà phê & trà sữa',  'Coffee & milk tea',    'taro'),
+  vegetarian: category('vegetarian', 'Món chay',          'Vegetarian',           'pandan'),
+  dessert:    category('dessert',    'Chè & tráng miệng', 'Desserts',             'dragonfruit'),
+  japanese:   category('japanese',   'Món Nhật',          'Japanese',             'dragonfruit'),
+  seafood:    category('seafood',    'Hải sản',           'Seafood',              'brand'),
+  other:      category('other',      'Quán ăn',           'Eatery',               'brand'),
 };
 
 /**

@@ -3,6 +3,7 @@ import Badge from '../ui/Badge';
 import RestaurantThumb from './RestaurantThumb';
 import RestaurantMeta from './RestaurantMeta';
 import { categoryOf, isKnownCategory } from '../../utils/category';
+import { useI18n } from '../../i18n';
 
 /**
  * RestaurantCard — compact list row (map sidebar): thumb, name, one line of
@@ -17,6 +18,7 @@ import { categoryOf, isKnownCategory } from '../../utils/category';
  * children   an extra line under the facts (the map's food pills)
  */
 export default function RestaurantCard({ restaurant, isActive = false, onClick, distanceKm = null, linkState, children }) {
+  const { t } = useI18n();
   const { id, name, address, isFeatured } = restaurant;
   const category = categoryOf(restaurant);
   const place = [isKnownCategory(category) && category.label, address].filter(Boolean).join(' · ');
@@ -37,7 +39,7 @@ export default function RestaurantCard({ restaurant, isActive = false, onClick, 
         {/* Top-3 of the "Phù hợp" sort (rankRestaurants) — on the thumb so the name keeps its room */}
         {isFeatured && (
           <Badge variant="brand" className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap shadow-e1">
-            Gợi ý
+            {t('card.featured')}
           </Badge>
         )}
       </div>

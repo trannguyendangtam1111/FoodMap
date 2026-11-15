@@ -14,6 +14,7 @@ import { MAX_EXCLUDED_FOODS, foodResultId } from '../../hooks/useFoodDecisionSou
 import { scopeKey, scopeSearchOf } from '../../utils/scope';
 import { DECISION_ANCHOR } from './TiffinDecision';
 import { ROLL_WORDS, describeDecisionError, describeEmpty } from './decisionCopy';
+import { t, useI18n } from '../../i18n';
 
 /**
  * RollDecision — "Ăn gì hôm nay?" presented as Roll (Roll V1 specification).
@@ -66,6 +67,7 @@ export function withFood(foods, food) {
 }
 
 export default function RollDecision({ decide, prepare, session, onBusyChange }) {
+  useI18n();
   const reducedMotion = usePrefersReducedMotion();
 
   // Runs are started here, from the decision's own calls — not by watching
@@ -192,9 +194,9 @@ export default function RollDecision({ decide, prepare, session, onBusyChange })
   }, [hash, key]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const failed = phase === PHASE.EMPTY || phase === PHASE.ERROR;
-  let hint = shown ? 'FoodMap gợi ý cho bạn' : 'Chạy Roll, FoodMap chọn một món cho bạn.';
-  if (phase === PHASE.LOCATING) hint = 'Đang lấy vị trí của bạn…';
-  else if (uiBusy) hint = shown ? 'FoodMap đang chọn món khác…' : 'FoodMap đang chọn món cho bạn…';
+  let hint = shown ? t('decision.fmSuggests') : t('decision.roll.hint');
+  if (phase === PHASE.LOCATING) hint = t('decision.locating');
+  else if (uiBusy) hint = shown ? t('decision.fmChoosingAnother') : t('decision.fmChoosingForYou');
   else if (!shown && phase === PHASE.EMPTY) hint = describeEmpty(empty);
   else if (!shown && phase === PHASE.ERROR) hint = describeDecisionError(error, wait, ROLL_WORDS);
 
@@ -211,7 +213,7 @@ export default function RollDecision({ decide, prepare, session, onBusyChange })
         {restored && !shownFresh && phase === PHASE.REVEALED ? '' : announcement(phase, shown, awaiting, empty, error, wait)}
       </p>
 
-      <h2 id="decision-title" className="font-display text-h2 text-ink">Ăn gì hôm nay?</h2>
+      <h2 id="decision-title" className="font-display text-h2 text-ink">{t('decision.title')}</h2>
       {/* Below 430 px a hint takes one or two lines: two are kept, so the reel
           below never moves when the hint changes (on landing, on starting). */}
       <p
@@ -257,7 +259,7 @@ export default function RollDecision({ decide, prepare, session, onBusyChange })
           className="mt-5 min-w-[11rem] aria-disabled:pointer-events-none aria-disabled:opacity-80"
         >
           {uiBusy ? <BusyMark /> : <Icon name="utensils" size={20} strokeWidth={2} />}
-          {uiBusy ? 'Đang chọn…' : failed ? 'Thử lại' : 'Chạy Roll'}
+          {uiBusy ? t('decision.choosing') : failed ? t('decision.retry') : t('decision.roll.run')}
         </Button>
       )}
     </section>
@@ -265,15 +267,15 @@ export default function RollDecision({ decide, prepare, session, onBusyChange })
 }
 
 function announcement(phase, shown, awaiting, empty, error, wait) {
-  if (awaiting) return shown ? 'Đang chọn món khác…' : 'Đang chọn món cho bạn…';
+  if (awaiting) return shown ? t('decision.choosingAnother') : t('decision.choosingForYou');
   switch (phase) {
     case PHASE.LOCATING:
-      return 'Đang lấy vị trí của bạn…';
+      return t('decision.locating');
     case PHASE.DECIDING:
     case PHASE.OPENING:
-      return shown ? 'Đang chọn món khác…' : 'Đang chọn món cho bạn…';
+      return shown ? t('decision.choosingAnother') : t('decision.choosingForYou');
     case PHASE.REVEALED:
-      return shown ? `Gợi ý: ${shown.food.label}. ${supplyLine(shown)}.` : '';
+      return shown ? t('decision.announce', { food: shown.food.label, supply: supplyLine(shown) }) : '';
     case PHASE.EMPTY:
       return describeEmpty(empty);
     case PHASE.ERROR:
@@ -286,6 +288,7 @@ function announcement(phase, shown, awaiting, empty, error, wait) {
 // ── Result: the food the server chose, once the reel has landed on it ───────
 
 function Result({ phase, result, fresh, empty, error, wait, busy, headingRef, onReroll, onStartOver }) {
+  const { lang } = useI18n();
   const exhausted = phase === PHASE.EMPTY;
   // A 400 most likely means the exclude list itself — start a clean session (as the cà mèn).
   const restart = exhausted || (phase === PHASE.ERROR && error?.status === 400);
@@ -298,7 +301,7 @@ function Result({ phase, result, fresh, empty, error, wait, busy, headingRef, on
       {exhausted ? (
         <div className="rounded-tile border-2 border-dashed border-brand-300 bg-surface/80 px-5 py-6 text-center">
           <p className="font-display text-h3 text-ink">{describeEmpty(empty)}</p>
-          <p className="mt-1 text-small text-ink-muted">Xem lại từ đầu, hoặc chọn món ở mục “Thèm gì?” bên dưới.</p>
+          <p className="mt-1 text-small text-ink-muted">{t('decision.exhaustedHint')}</p>
         </div>
       ) : (
         <FoodReveal
@@ -325,7 +328,7 @@ function Result({ phase, result, fresh, empty, error, wait, busy, headingRef, on
           className="scroll-mb-bottom-nav w-full aria-disabled:pointer-events-none sm:w-auto"
         >
           {busy ? <BusyMark /> : <Icon name="utensils" size={18} strokeWidth={2} />}
-          {restart ? 'Xem lại từ đầu' : 'Chạy lại'}
+          {restart ? t('decision.startOver') : t('decision.roll.again')}
         </Button>
         {!exhausted && (
           <Link
@@ -339,7 +342,7 @@ function Result({ phase, result, fresh, empty, error, wait, busy, headingRef, on
             })}
           >
             <Icon name="search" size={18} strokeWidth={2} />
-            Tìm quán {food.label.toLocaleLowerCase('vi')}
+            {t('decision.findPlaces', { food: lang === 'vi' ? food.label.toLocaleLowerCase('vi') : food.label })}
           </Link>
         )}
       </div>

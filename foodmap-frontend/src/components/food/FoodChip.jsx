@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import FoodArt from '../art/FoodArt';
+import { getLocale, t, useI18n } from '../../i18n';
 
 /**
  * One available food in "Thèm gì?": art, the server's label and the real
@@ -13,9 +14,7 @@ import FoodArt from '../art/FoodArt';
  * coordinates.
  */
 
-const KIND_TAGS = { DRINK: 'Đồ uống', DESSERT: 'Tráng miệng' };
-
-const VI_KM = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 });
+const KIND_TAG_KEYS = { DRINK: 'food.kind.DRINK', DESSERT: 'food.kind.DESSERT' };
 
 /**
  * "6 quán"; "6+ quán" when the server marks the count as a lower bound
@@ -23,21 +22,22 @@ const VI_KM = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 });
  * at most as "99+ quán" (the chip's display limit, Master Specification §9).
  */
 export function countText(count, atLeast = false) {
-  if (count >= 100) return '99+ quán';
-  return atLeast ? `${count}+ quán` : `${count} quán`;
+  if (count >= 100) return t('food.count99');
+  return atLeast ? t('food.countAtLeast', { count }) : t('food.count', { count });
 }
 
 /** "5 km", "2,4 km". */
 export function radiusText(meters) {
-  return `${VI_KM.format(meters / 1000)} km`;
+  return `${new Intl.NumberFormat(getLocale(), { maximumFractionDigits: 1 }).format(meters / 1000)} km`;
 }
 
 export default function FoodChip({ food, href, scopePhrase }) {
   const widened = food.radiusWidened && Number.isFinite(food.radiusMeters);
-  const kindTag = KIND_TAGS[food.kind];
+  const { t: tr } = useI18n();
+  const kindTag = KIND_TAG_KEYS[food.kind] ? tr(KIND_TAG_KEYS[food.kind]) : null;
   const accessibleName = [
     `${food.label}, ${countText(food.count, food.countCapped)}`,
-    widened ? `trong ${radiusText(food.radiusMeters)}` : null,
+    widened ? tr('food.within', { radius: radiusText(food.radiusMeters) }) : null,
     scopePhrase,
   ].filter(Boolean).join(' ');
 
@@ -65,7 +65,7 @@ export default function FoodChip({ food, href, scopePhrase }) {
             <>
               {/* narrow chips: the radius on its own line, never split ("5 / km") */}
               <span className="hidden lg:inline"> · </span>
-              <span className="block whitespace-nowrap lg:inline">trong {radiusText(food.radiusMeters)}</span>
+              <span className="block whitespace-nowrap lg:inline">{tr('food.within', { radius: radiusText(food.radiusMeters) })}</span>
             </>
           )}
         </span>

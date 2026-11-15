@@ -2,8 +2,8 @@ import { useId, useState } from 'react';
 import { reviewApi } from '../../api/review.api';
 import Button from '../ui/Button';
 import StarRating from '../ui/StarRating';
+import { useI18n } from '../../i18n';
 
-const RATING_LABELS = ['', 'Tệ', 'Tạm được', 'Ổn', 'Ngon', 'Tuyệt vời'];
 
 const FIELD_CLASS =
   'w-full rounded-field border border-line bg-surface px-3.5 text-body text-ink outline-none ' +
@@ -21,21 +21,22 @@ const FIELD_CLASS =
  * onCancel      () => void          Called when the user cancels.
  */
 export default function ReviewForm({ restaurantId, foods = [], onSuccess, onCancel }) {
+  const { t } = useI18n();
   const [rating, setRating]       = useState(0);
   const [comment, setComment]     = useState('');
   const [foodId, setFoodId]       = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError]         = useState('');
+  const [error, setError]         = useState(null); // { key } (i18n, translated at render) | { text } (server)
 
   const fieldId = useId();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (rating === 0) {
-      setError('Vui lòng chọn số sao trước khi đăng.');
+      setError({ key: 'review.err.noRating' });
       return;
     }
-    setError('');
+    setError(null);
     setIsLoading(true);
     try {
       await reviewApi.create(restaurantId, {
@@ -50,10 +51,8 @@ export default function ReviewForm({ restaurantId, foods = [], onSuccess, onCanc
       onSuccess?.();
     } catch (err) {
       // Server returns 400 with { message: "…" } for duplicates and validation errors.
-      setError(
-        err.response?.data?.message ??
-        'Không gửi được đánh giá. Vui lòng thử lại.',
-      );
+      const message = err.response?.data?.message;
+      setError(message ? { text: message } : { key: 'review.err.postFailed' });
     } finally {
       setIsLoading(false);
     }
@@ -65,26 +64,26 @@ export default function ReviewForm({ restaurantId, foods = [], onSuccess, onCanc
       className="space-y-4 rounded-card border border-line bg-surface-sunken/60 p-4 sm:p-5"
     >
       <div className="flex items-center justify-between">
-        <h3 className="font-display text-h3 text-ink">Viết đánh giá</h3>
+        <h3 className="font-display text-h3 text-ink">{t('review.write')}</h3>
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
             className="rounded-tag text-small text-ink-muted transition-colors hover:text-ink"
           >
-            Huỷ
+            {t('review.cancel')}
           </button>
         )}
       </div>
 
       {/* ── Star picker ───────────────────────────────────────────────────── */}
       <div>
-        <p className="mb-1.5 text-small font-semibold text-ink">Số sao của bạn *</p>
+        <p className="mb-1.5 text-small font-semibold text-ink">{t('review.yourRating')}</p>
         <div className="flex items-center gap-3">
           <StarRating value={rating} size="lg" interactive onChange={setRating} />
           {rating > 0 && (
             <span className="text-body font-semibold text-warning-ink" aria-live="polite">
-              {RATING_LABELS[rating]}
+              {t(`review.rating.${rating}`)}
             </span>
           )}
         </div>
@@ -94,7 +93,7 @@ export default function ReviewForm({ restaurantId, foods = [], onSuccess, onCanc
       {foods.length > 0 && (
         <div>
           <label htmlFor={`${fieldId}-food`} className="mb-1.5 block text-small font-semibold text-ink">
-            Đánh giá một món cụ thể? <span className="font-normal text-ink-muted">(không bắt buộc)</span>
+            {t('review.dishQuestion')} <span className="font-normal text-ink-muted">{t('review.optional')}</span>
           </label>
           <select
             id={`${fieldId}-food`}
@@ -102,7 +101,7 @@ export default function ReviewForm({ restaurantId, foods = [], onSuccess, onCanc
             onChange={(e) => setFoodId(e.target.value)}
             className={`h-11 ${FIELD_CLASS}`}
           >
-            <option value="">Đánh giá chung cho quán</option>
+            <option value="">{t('review.wholePlace')}</option>
             {foods.map((f) => (
               <option key={f.id} value={f.id}>{f.name}</option>
             ))}
@@ -113,13 +112,13 @@ export default function ReviewForm({ restaurantId, foods = [], onSuccess, onCanc
       {/* ── Comment ───────────────────────────────────────────────────────── */}
       <div>
         <label htmlFor={`${fieldId}-comment`} className="mb-1.5 block text-small font-semibold text-ink">
-          Trải nghiệm của bạn <span className="font-normal text-ink-muted">(không bắt buộc)</span>
+          {t('review.experience')} <span className="font-normal text-ink-muted">{t('review.optional')}</span>
         </label>
         <textarea
           id={`${fieldId}-comment`}
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          placeholder="Bạn thấy quán thế nào? Có muốn giới thiệu cho bạn bè không?"
+          placeholder={t('review.placeholder')}
           rows={4}
           maxLength={2000}
           className={`resize-none py-2.5 ${FIELD_CLASS}`}
@@ -133,21 +132,21 @@ export default function ReviewForm({ restaurantId, foods = [], onSuccess, onCanc
 
       {/* ── Error ─────────────────────────────────────────────────────────── */}
       {error && (
-        <p role="alert" className="rounded-field bg-danger-tint px-3 py-2 text-small text-danger-ink">{error}</p>
+        <p role="alert" className="rounded-field bg-danger-tint px-3 py-2 text-small text-danger-ink">{error.text ?? t(error.key)}</p>
       )}
 
       {/* ── Actions ───────────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-3">
         <Button type="submit" isLoading={isLoading} size="sm" disabled={rating === 0}>
-          Đăng đánh giá
+          {t('review.post')}
         </Button>
         {onCancel && (
           <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
-            Huỷ
+            {t('review.cancel')}
           </Button>
         )}
         {rating === 0 && !isLoading && (
-          <span className="text-small text-ink-muted">Chọn số sao trước nhé</span>
+          <span className="text-small text-ink-muted">{t('review.pickStarsFirst')}</span>
         )}
       </div>
     </form>

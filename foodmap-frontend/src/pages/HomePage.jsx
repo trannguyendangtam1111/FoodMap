@@ -4,6 +4,7 @@ import Icon from '../components/ui/Icon';
 import HeroSection from '../components/home/HeroSection';
 import ThemGiSection from '../components/food/ThemGiSection';
 import MapTeaser from '../components/home/MapTeaser';
+import { useI18n } from '../i18n';
 
 /**
  * Homepage.
@@ -32,6 +33,7 @@ export default function HomePage() {
 }
 
 function ClosingBand() {
+  const { t } = useI18n();
   return (
     <section aria-labelledby="closing-title" className="mx-auto max-w-6xl px-4 pb-14 pt-6 lg:pb-20">
       <div
@@ -39,12 +41,12 @@ function ClosingBand() {
                    sm:flex-row sm:items-center sm:justify-between sm:px-10"
       >
         <div>
-          <h2 id="closing-title" className="font-display text-h2 text-ink">Đói rồi? Đi ăn thôi!</h2>
-          <p className="mt-1 text-body text-ink/80">Chọn một quán trên bản đồ và lên đường.</p>
+          <h2 id="closing-title" className="font-display text-h2 text-ink">{t('home.closingTitle')}</h2>
+          <p className="mt-1 text-body text-ink/80">{t('home.closingSub')}</p>
         </div>
         <Link to="/map" className={buttonClass({ variant: 'secondary', size: 'lg', className: 'flex-shrink-0' })}>
           <Icon name="map" size={20} strokeWidth={2} />
-          Mở bản đồ
+          {t('home.openMap')}
         </Link>
       </div>
     </section>

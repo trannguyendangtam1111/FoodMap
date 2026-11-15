@@ -1,5 +1,6 @@
 import { pillFoods } from '../../utils/mapFood';
 import { GlyphIcon } from './FoodGlyphSprite';
+import { useI18n } from '../../i18n';
 
 /**
  * The foods the server matched for a restaurant (its `foodKeys`), as small
@@ -11,11 +12,12 @@ import { GlyphIcon } from './FoodGlyphSprite';
  *   selectedKey  the food chosen on the map, if any
  */
 export default function FoodPills({ foodKeys, foods, selectedKey = null, className = '' }) {
+  const { t } = useI18n();
   const { shown, more } = pillFoods(foodKeys, foods, selectedKey);
   if (shown.length === 0) return null;
 
   return (
-    <ul aria-label="Món có ở quán" className={`flex flex-wrap gap-1 ${className}`}>
+    <ul aria-label={t('mapPills.label')} className={`flex flex-wrap gap-1 ${className}`}>
       {shown.map((food) => (
         <li
           key={food.key}
@@ -29,7 +31,7 @@ export default function FoodPills({ foodKeys, foods, selectedKey = null, classNa
       ))}
       {more > 0 && (
         <li
-          aria-label={`và ${more} món khác`}
+          aria-label={t('mapPills.more', { count: more })}
           className="inline-flex items-center rounded-full bg-surface-sunken px-2 py-0.5 text-label font-medium text-ink-muted"
         >
           +{more}

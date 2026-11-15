@@ -2,6 +2,7 @@ import { useId } from 'react';
 import { buttonClass } from '../ui/Button';
 import Icon from '../ui/Icon';
 import { directionsUrl } from '../../utils/directions';
+import { useI18n } from '../../i18n';
 
 /**
  * "Chỉ đường" — opens Google Maps directions to the restaurant in a new tab
@@ -13,6 +14,7 @@ import { directionsUrl } from '../../utils/directions';
  * accessible description (and the trailing icon, visually).
  */
 export default function DirectionsLink({ restaurant, variant = 'secondary', className = '' }) {
+  const { t } = useI18n();
   const noteId = useId();
   const href = directionsUrl(restaurant);
   if (!href) return null;
@@ -28,11 +30,11 @@ export default function DirectionsLink({ restaurant, variant = 'secondary', clas
         className={buttonClass({ variant, size: 'md', className })}
       >
         <Icon name="navigation" size={18} strokeWidth={2} />
-        Chỉ đường
-        {restaurant.name && <span className="sr-only"> đến {restaurant.name}</span>}
+        {t('directions.label')}
+        {restaurant.name && <span className="sr-only">{t('directions.to', { name: restaurant.name })}</span>}
         <Icon name="external" size={14} strokeWidth={2} />
       </a>
-      <span id={noteId} hidden>Mở Google Maps trong thẻ mới.</span>
+      <span id={noteId} hidden>{t('directions.note')}</span>
     </>
   );
 }

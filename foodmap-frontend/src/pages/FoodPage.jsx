@@ -13,7 +13,8 @@ import FoodRestaurantList, { FoodRestaurantListSkeleton } from '../components/re
 import useCatalog from '../hooks/useCatalog';
 import useLocationScope from '../hooks/useLocationScope';
 import useFoodRestaurants from '../hooks/useFoodRestaurants';
-import { CITY_CENTRE_SCOPE, MODES, inSentence, scopeLabel } from '../utils/scope';
+import { CITY_CENTRE_SCOPE, MODES, inSentence, scopeDtoLabel, scopeLabel } from '../utils/scope';
+import { t, useI18n } from '../i18n';
 
 /**
  * /mon/:foodKey[?area=key | ?near=1] — the food page: one FOOD, then the
@@ -38,11 +39,12 @@ import { CITY_CENTRE_SCOPE, MODES, inSentence, scopeLabel } from '../utils/scope
  * The list's count in full: "127 quán", or "N+ quán" when the server says
  * its total is a lower bound (totalCapped) — never inferred from the number.
  */
-export const totalText = (total, atLeast) => `${total}${atLeast ? '+' : ''} quán`;
+export const totalText = (total, atLeast) => (atLeast ? t('food.countAtLeast', { count: total }) : t('food.count', { count: total }));
 
 const optionOf = (mode) => (mode === MODES.USER ? 'near' : mode === MODES.AREA ? 'area' : 'centre');
 
 export default function FoodPage() {
+  const { lang } = useI18n();
   const { foodKey } = useParams();
   const [params, setParams] = useSearchParams();
   const catalogState = useCatalog({ enabled: true });
@@ -133,7 +135,7 @@ export default function FoodPage() {
     if (ok) {
       setParams({ near: '1' }, { replace: true });
       focusOption.current = 'near';
-    } else setNotice('Không lấy được vị trí. Bạn có thể chọn khu vực.');
+    } else setNotice('themgi.notice.locationFailed');   // i18n key
   };
 
   const openPicker = () => {
@@ -170,8 +172,8 @@ export default function FoodPage() {
   if (view === 'catalogError') {
     return (
       <Shell>
-        <h1 className="font-display text-h1 text-ink">Chưa tải được danh sách món.</h1>
-        <RetryNotice title="FoodMap chưa mở được món này." error={catalogState.error} onRetry={catalogState.retry} className="mt-4" />
+        <h1 className="font-display text-h1 text-ink">{t('themgi.loadFailed')}</h1>
+        <RetryNotice title={t('foodPage.cantOpen')} error={catalogState.error} onRetry={catalogState.retry} className="mt-4" />
       </Shell>
     );
   }
@@ -179,39 +181,40 @@ export default function FoodPage() {
   if (view === 'unknownFood' || data.list.error?.status === 404) {
     return (
       <Shell>
-        <h1 className="font-display text-h1 text-ink">Chưa có món này trên FoodMap.</h1>
-        <Link to="/" className={buttonClass({ variant: 'secondary', className: 'mt-5' })}>Về trang chủ</Link>
+        <h1 className="font-display text-h1 text-ink">{t('foodPage.unknown')}</h1>
+        <Link to="/" className={buttonClass({ variant: 'secondary', className: 'mt-5' })}>{t('notFound.home')}</Link>
       </Shell>
     );
   }
 
-  const foodLower = food.label.toLocaleLowerCase('vi');
+  // Inside a Vietnamese sentence the food reads in lower case; English keeps the server's label.
+  const foodLower = lang === 'vi' ? food.label.toLocaleLowerCase('vi') : food.label;
   const list = data.list;
   const listData = list.status === 'ready' ? list.data : null;
-  const label = listData?.scope.label ?? (scope ? scopeLabel(scope) : null);
+  const label = scopeDtoLabel(listData?.scope) ?? (scope ? scopeLabel(scope) : null);
   const phrase = inSentence(label);
   const scopeRefused = view === 'results'
     && (list.error?.status === 400 || data.suggestion.error?.status === 400);
   const empty = listData && listData.totalElements === 0;
   // None among the rows the server read is not "none at all" when its read was capped.
   const emptyText = listData?.totalCapped
-    ? `Trong các quán FoodMap đã xem ${phrase}, chưa thấy quán ${foodLower}.`
-    : `Chưa có quán ${foodLower} ${phrase}.`;
+    ? t('foodPage.emptyCapped', { phrase, food: foodLower })
+    : t('foodPage.empty', { food: foodLower, phrase });
   const selected = locating ? 'near' : picking ? 'area' : optionOf(scope?.mode ?? (near ? MODES.USER : MODES.AREA));
 
   const status = view === 'prompt'
-    ? `Bạn muốn tìm quán ${foodLower} ở đâu?`
+    ? t('foodPage.where', { food: foodLower })
     : view === 'badArea'
-      ? 'Khu vực này chưa có trên FoodMap.'
+      ? t('foodPage.badArea')
       : scopeRefused
-        ? 'Phạm vi tìm này hiện chưa dùng được.'
+        ? t('foodPage.scopeRefused')
         : list.status === 'loading'
-          ? `Đang tìm quán ${foodLower} ${phrase}…`
+          ? t('foodPage.searching', { food: foodLower, phrase })
           : list.status === 'error'
-            ? 'Chưa tải được danh sách quán.'
+            ? t('foodPage.listFailed')
             : empty
               ? emptyText
-              : listData ? `${totalText(listData.totalElements, listData.totalCapped)} ${foodLower} ${phrase}.` : '';
+              : listData ? t('foodPage.statusTotal', { total: totalText(listData.totalElements, listData.totalCapped), food: foodLower, phrase }) : '';
 
   return (
     <Shell>
@@ -238,7 +241,7 @@ export default function FoodPage() {
                   className="inline-flex min-h-11 items-center rounded-full px-2 text-small font-semibold text-brand-700
                              underline decoration-brand-300 underline-offset-4 hover:text-brand-800"
                 >
-                  Đổi khu vực
+                  {t('themgi.changeArea')}
                 </button>
               )}
             </p>
@@ -248,10 +251,10 @@ export default function FoodPage() {
 
       {view === 'prompt' ? (
         <div className="mt-6 rounded-card border border-line bg-surface p-4 sm:p-5">
-          <h2 className="font-display text-h3 text-ink">Bạn muốn tìm quán {foodLower} ở đâu?</h2>
-          <p className="mt-1 text-small text-ink-muted">FoodMap chỉ hỏi vị trí khi bạn bấm “Gần tôi”.</p>
+          <h2 className="font-display text-h3 text-ink">{t('foodPage.where', { food: foodLower })}</h2>
+          <p className="mt-1 text-small text-ink-muted">{t('foodPage.locationNote')}</p>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-            <Button variant="secondary" onClick={goNear} isLoading={locating} className="w-full sm:w-auto">Gần tôi</Button>
+            <Button variant="secondary" onClick={goNear} isLoading={locating} className="w-full sm:w-auto">{t('scope.option.near')}</Button>
             <button
               ref={promptAreaRef}
               type="button"
@@ -260,14 +263,14 @@ export default function FoodPage() {
               aria-controls={ids.picker}
               className={buttonClass({ variant: 'secondary', className: 'w-full sm:w-auto' })}
             >
-              Chọn khu vực
+              {t('themgi.chooseArea')}
             </button>
-            <Button variant="primary" onClick={goCentre} className="w-full sm:w-auto">Quanh trung tâm TP.HCM</Button>
+            <Button variant="primary" onClick={goCentre} className="w-full sm:w-auto">{t('scope.cityCentre')}</Button>
           </div>
         </div>
       ) : (
         <div ref={scopeBarRef} className="mt-5">
-          <ScopeBar value={selected} onChange={onScopeChange} busy={locating} legend={`Tìm quán ${foodLower} quanh đâu?`} />
+          <ScopeBar value={selected} onChange={onScopeChange} busy={locating} legend={t('foodPage.scopeLegend', { food: foodLower })} />
         </div>
       )}
 
@@ -276,16 +279,16 @@ export default function FoodPage() {
       )}
 
       {notice && (
-        <p className="mt-3 rounded-tag bg-warning-tint px-3 py-2 text-small font-medium text-warning-ink">{notice}</p>
+        <p className="mt-3 rounded-tag bg-warning-tint px-3 py-2 text-small font-medium text-warning-ink">{t(notice)}</p>
       )}
 
       {view === 'badArea' && (
-        <ScopeProblem text="Khu vực này chưa có trên FoodMap." onCentre={goCentre} onArea={openPicker} />
+        <ScopeProblem text={t('foodPage.badArea')} onCentre={goCentre} onArea={openPicker} />
       )}
 
       {view === 'results' && scopeRefused && (
         <ScopeProblem
-          text={scope.mode === MODES.AREA ? 'Khu vực này hiện chưa dùng được.' : 'Không dùng được vị trí này.'}
+          text={scope.mode === MODES.AREA ? t('foodPage.areaUnavailable') : t('foodPage.locationUnusable')}
           onCentre={goCentre}
           onArea={openPicker}
         />
@@ -295,11 +298,11 @@ export default function FoodPage() {
         <div className="mt-6 flex flex-col items-start gap-3 rounded-card border border-line bg-surface p-4 sm:p-5">
           <p className="text-body text-ink">{emptyText}</p>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
-            <Link to="/" className={buttonClass({ variant: 'secondary', className: 'w-full sm:w-auto' })}>Món khác</Link>
-            <Button variant="secondary" onClick={openPicker} className="w-full sm:w-auto">Khu vực khác</Button>
+            <Link to="/" className={buttonClass({ variant: 'secondary', className: 'w-full sm:w-auto' })}>{t('decision.anotherDish')}</Link>
+            <Button variant="secondary" onClick={openPicker} className="w-full sm:w-auto">{t('foodPage.otherArea')}</Button>
             {scope.mode === MODES.CITY_CENTER
-              ? <Button variant="secondary" onClick={goNear} isLoading={locating} className="w-full sm:w-auto">Gần tôi</Button>
-              : <Button variant="secondary" onClick={goCentre} className="w-full sm:w-auto">Quanh trung tâm TP.HCM</Button>}
+              ? <Button variant="secondary" onClick={goNear} isLoading={locating} className="w-full sm:w-auto">{t('scope.option.near')}</Button>
+              : <Button variant="secondary" onClick={goCentre} className="w-full sm:w-auto">{t('scope.cityCentre')}</Button>}
           </div>
         </div>
       )}
@@ -309,7 +312,7 @@ export default function FoodPage() {
           {listData?.scope.radiusWidened && (
             <p className="mt-4 flex items-start gap-1.5 text-small text-ink-muted">
               <Icon name="globe" size={16} className="mt-0.5 flex-shrink-0" />
-              <span>{label} ít quán {foodLower}, FoodMap đã tìm rộng hơn, trong {radiusText(listData.scope.radiusMeters)}.</span>
+              <span>{t('foodPage.widened', { label, food: foodLower, radius: radiusText(listData.scope.radiusMeters) })}</span>
             </p>
           )}
           <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-start">
@@ -325,14 +328,14 @@ export default function FoodPage() {
               onRetry={data.retrySuggestion}
             />
             <section aria-labelledby={ids.list} aria-busy={list.status === 'loading' || undefined} className="min-w-0">
-              <h2 id={ids.list} className="break-words font-display text-h3 text-ink">Quán {foodLower} {phrase}</h2>
+              <h2 id={ids.list} className="break-words font-display text-h3 text-ink">{t('foodPage.listTitle', { food: foodLower, phrase })}</h2>
               <p className="mt-1 text-small text-ink-muted">
-                {listData ? `${totalText(listData.totalElements, listData.totalCapped)} · ` : ''}Số quán FoodMap biết có món này (theo tên quán và thực đơn).
+                {listData ? `${totalText(listData.totalElements, listData.totalCapped)} · ` : ''}{t('themgi.countNote')}
               </p>
               <div className="mt-3">
                 {list.status === 'loading' && <FoodRestaurantListSkeleton />}
                 {list.status === 'error' && (
-                  <RetryNotice title="Chưa tải được danh sách quán." error={list.error} onRetry={data.retryList} />
+                  <RetryNotice title={t('foodPage.listFailed')} error={list.error} onRetry={data.retryList} />
                 )}
                 {listData && (
                   <FoodRestaurantList
@@ -358,18 +361,20 @@ export default function FoodPage() {
 }
 
 function ScopeProblem({ text, onCentre, onArea }) {
+  useI18n();
   return (
     <div className="mt-6 flex flex-col items-start gap-3 rounded-card border border-line bg-surface p-4 sm:p-5">
       <p className="text-body text-ink">{text}</p>
       <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
-        <Button variant="secondary" onClick={onCentre} className="w-full sm:w-auto">Quanh trung tâm TP.HCM</Button>
-        <Button variant="secondary" onClick={onArea} className="w-full sm:w-auto">Chọn khu vực</Button>
+        <Button variant="secondary" onClick={onCentre} className="w-full sm:w-auto">{t('scope.cityCentre')}</Button>
+        <Button variant="secondary" onClick={onArea} className="w-full sm:w-auto">{t('themgi.chooseArea')}</Button>
       </div>
     </div>
   );
 }
 
 function PageSkeleton() {
+  useI18n();
   return (
     <Shell busy>
       <div className="flex items-center gap-4 sm:gap-5">
@@ -381,7 +386,7 @@ function PageSkeleton() {
       </div>
       <Skeleton className="mt-5 h-11 w-72 max-w-full rounded-full" />
       <div className="mt-6"><FoodRestaurantListSkeleton /></div>
-      <p role="status" className="sr-only">Đang tải món…</p>
+      <p role="status" className="sr-only">{t('foodPage.loading')}</p>
     </Shell>
   );
 }

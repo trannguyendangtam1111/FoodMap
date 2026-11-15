@@ -7,6 +7,7 @@ import StarRating from '../ui/StarRating';
 import Spinner from '../ui/Spinner';
 import Button from '../ui/Button';
 import { formatRating } from '../../utils/format';
+import { useI18n } from '../../i18n';
 
 const PAGE_SIZE = 10;
 
@@ -21,6 +22,7 @@ const PAGE_SIZE = 10;
  * foods         array    Food items for the "reviewing dish" selector in the form.
  */
 export default function ReviewList({ restaurantId, avgRating = 0, reviewCount = 0, foods = [] }) {
+  const { t } = useI18n();
   const { isAuthenticated, user } = useAuth();
 
   const [reviews, setReviews]         = useState([]);
@@ -54,7 +56,7 @@ export default function ReviewList({ restaurantId, avgRating = 0, reviewCount = 
         setHasReviewed(true);
       }
     } catch {
-      setError('Không tải được đánh giá.');
+      setError('review.err.loadFailed');   // i18n key
     } finally {
       setIsLoading(false);
     }
@@ -95,21 +97,21 @@ export default function ReviewList({ restaurantId, avgRating = 0, reviewCount = 
       {/* ── Section header ────────────────────────────────────────────────── */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-display text-h3 text-ink">
-          Đánh giá
+          {t('review.title')}
           {totalElements > 0 && (
             <span className="ml-2 font-sans text-body font-normal text-ink-muted">({totalElements})</span>
           )}
         </h2>
         {canWriteReview && (
           <Button variant="secondary" size="sm" onClick={() => setShowForm(true)}>
-            Viết đánh giá
+            {t('review.write')}
           </Button>
         )}
         {isAuthenticated && hasReviewed && (
-          <span className="text-small text-ink-muted">Bạn đã đánh giá quán này</span>
+          <span className="text-small text-ink-muted">{t('review.alreadyReviewed')}</span>
         )}
         {!isAuthenticated && (
-          <span className="text-small text-ink-muted">Đăng nhập để viết đánh giá</span>
+          <span className="text-small text-ink-muted">{t('review.loginToWrite')}</span>
         )}
       </div>
 
@@ -122,7 +124,7 @@ export default function ReviewList({ restaurantId, avgRating = 0, reviewCount = 
               {formatRating(avgRating)}
             </span>
             <StarRating value={avgRating} size="sm" className="mt-2" />
-            <span className="mt-1 text-small text-ink-muted">{totalElements} đánh giá</span>
+            <span className="mt-1 text-small text-ink-muted">{t('review.count', { count: totalElements })}</span>
           </div>
 
           {/* Bar chart — only rendered when all reviews are loaded to avoid a
@@ -161,12 +163,12 @@ export default function ReviewList({ restaurantId, avgRating = 0, reviewCount = 
         </div>
       )}
 
-      {error && <p className="mb-4 text-small text-danger-ink">{error}</p>}
+      {error && <p className="mb-4 text-small text-danger-ink">{t(error)}</p>}
 
       {/* ── Review items ──────────────────────────────────────────────────── */}
       {reviews.length === 0 && !isLoading ? (
         <p className="py-10 text-center text-body text-ink-muted">
-          Chưa có đánh giá nào — hãy là người đầu tiên chia sẻ trải nghiệm!
+          {t('review.empty')}
         </p>
       ) : (
         <div>
@@ -190,7 +192,7 @@ export default function ReviewList({ restaurantId, avgRating = 0, reviewCount = 
       {page + 1 < totalPages && !isLoading && (
         <div className="mt-4 text-center">
           <Button variant="ghost" size="sm" onClick={() => load(page + 1)}>
-            Xem thêm đánh giá
+            {t('review.more')}
           </Button>
         </div>
       )}

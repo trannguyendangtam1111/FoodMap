@@ -12,6 +12,7 @@
  *
  * Plain ESM, no React, so it is unit-testable.
  */
+import { getLang, t } from '../i18n';
 
 export const MODES = Object.freeze({ USER: 'USER', AREA: 'AREA', CITY_CENTER: 'CITY_CENTER' });
 
@@ -62,14 +63,30 @@ export function scopeKey(scope) {
 
 /** The phrase for a scope before the server has answered ("Quanh Quận 1"). */
 export function scopeLabel(scope) {
-  if (scope?.mode === MODES.USER) return 'Gần bạn';
-  if (scope?.mode === MODES.AREA) return scope.areaLabel ? `Quanh ${scope.areaLabel}` : 'Quanh khu vực đã chọn';
-  return 'Quanh trung tâm TP.HCM';
+  if (scope?.mode === MODES.USER) return t('scope.nearYou');
+  if (scope?.mode === MODES.AREA) return scope.areaLabel ? t('scope.aroundArea', { area: scope.areaLabel }) : t('scope.aroundSelectedArea');
+  return t('scope.cityCentre');
+}
+
+/**
+ * The phrase for a server ScopeDTO. In Vietnamese the server's own phrase is
+ * shown as sent; in English it is rebuilt from the source and the area's
+ * name (a place name, kept as is). Unknown sources keep the server phrase.
+ */
+export function scopeDtoLabel(dto) {
+  if (!dto) return null;
+  if (getLang() === 'vi' && dto.label) return dto.label;
+  if (dto.locationSource === MODES.USER) return t('scope.nearYou');
+  if (dto.locationSource === MODES.AREA) {
+    return dto.area?.label ? t('scope.aroundArea', { area: dto.area.label }) : t('scope.aroundSelectedArea');
+  }
+  if (dto.locationSource === MODES.CITY_CENTER) return t('scope.cityCentre');
+  return dto.label ?? null;
 }
 
 /** "Quanh Quận 1" → "quanh Quận 1", for use inside a sentence. */
 export function inSentence(label) {
-  return label ? label.charAt(0).toLocaleLowerCase('vi') + label.slice(1) : '';
+  return label ? label.charAt(0).toLocaleLowerCase(getLang()) + label.slice(1) : '';
 }
 
 export function isLocation(location) {

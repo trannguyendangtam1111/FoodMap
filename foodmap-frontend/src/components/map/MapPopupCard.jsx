@@ -6,6 +6,7 @@ import RestaurantMeta from '../restaurant/RestaurantMeta';
 import { categoryOf, isKnownCategory } from '../../utils/category';
 import { matchesFood } from '../../utils/mapFood';
 import FoodPills from './FoodPills';
+import { useI18n } from '../../i18n';
 
 /*
  * Content for Goong map popups. MapView renders these into the popup's DOM
@@ -30,6 +31,7 @@ import FoodPills from './FoodPills';
 export function MapPopupCard({
   restaurant, distanceKm, onNavigate, onClose, foods = null, foodKey = null, variant = 'popup', detailLink = null,
 }) {
+  const { t } = useI18n();
   const category = categoryOf(restaurant);
   const chosen = matchesFood(restaurant, foodKey) ? foods?.get(foodKey) : null;
   const place = [isKnownCategory(category) && category.label, restaurant.address].filter(Boolean).join(' · ');
@@ -51,7 +53,7 @@ export function MapPopupCard({
             <button
               type="button"
               onClick={onClose}
-              aria-label="Đóng"
+              aria-label={t('common.close')}
               className={`flex-shrink-0 rounded-full text-ink-subtle transition-colors hover:bg-surface-sunken hover:text-ink
                           ${sheet ? '-mr-2 -mt-2 flex h-11 w-11 items-center justify-center' : '-mr-1 -mt-1 p-1'}`}
             >
@@ -64,7 +66,7 @@ export function MapPopupCard({
 
       {place && <p className="mt-2 truncate text-label font-normal text-ink-muted">{place}</p>}
       {chosen && (
-        <p data-food-note className="mt-2 text-small font-semibold text-brand-800">Có món {chosen.label}</p>
+        <p data-food-note className="mt-2 text-small font-semibold text-brand-800">{t('mapPopup.hasFood', { food: chosen.label })}</p>
       )}
       <FoodPills foodKeys={restaurant.foodKeys} foods={foods} selectedKey={foodKey} className="mt-2" />
 
@@ -74,7 +76,7 @@ export function MapPopupCard({
           state={detailLink.state}
           className={buttonClass({ size: 'md', className: 'mt-3 w-full' })}
         >
-          Xem chi tiết
+          {t('mapPopup.details')}
         </Link>
       ) : (
         <button
@@ -82,7 +84,7 @@ export function MapPopupCard({
           onClick={onNavigate}
           className={buttonClass({ size: 'sm', className: 'mt-3 w-full' })}
         >
-          Xem chi tiết
+          {t('mapPopup.details')}
         </button>
       )}
     </div>

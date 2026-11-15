@@ -1,10 +1,12 @@
+import { getLocale, t } from '../i18n';
+
 /**
  * Format a VND price. Backend stores prices as BigDecimal in VND (e.g. 65000).
  * Output: "65.000 ₫"
  */
 export function formatPrice(value) {
   if (value == null) return '';
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+  return new Intl.NumberFormat(getLocale(), { style: 'currency', currency: 'VND' }).format(value);
 }
 
 /**
@@ -19,7 +21,7 @@ export function formatPriceLevel(level) {
  * Format an average rating with one decimal, Vietnamese style: 4.5 → "4,5".
  */
 export function formatRating(value) {
-  return Number(value ?? 0).toLocaleString('vi-VN', {
+  return Number(value ?? 0).toLocaleString(getLocale(), {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
   });
@@ -37,10 +39,10 @@ export function formatRelativeTime(isoString) {
   const diffSec = Math.floor(diffMs / 1000);
 
   if (typeof Intl?.RelativeTimeFormat === 'undefined') {
-    return date.toLocaleDateString('vi-VN');
+    return date.toLocaleDateString(getLocale());
   }
 
-  const rtf = new Intl.RelativeTimeFormat('vi', { numeric: 'auto' });
+  const rtf = new Intl.RelativeTimeFormat(getLocale(), { numeric: 'auto' });
 
   if (diffSec < 60) return rtf.format(-diffSec, 'second');
   const diffMin = Math.floor(diffSec / 60);
@@ -61,8 +63,7 @@ export function formatRelativeTime(isoString) {
 export function formatOpeningHours(hoursMap) {
   if (!hoursMap) return [];
   const order = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-  const dayLabels = { monday: 'Thứ 2', tuesday: 'Thứ 3', wednesday: 'Thứ 4', thursday: 'Thứ 5', friday: 'Thứ 6', saturday: 'Thứ 7', sunday: 'Chủ nhật' };
   return order
     .filter((d) => hoursMap[d])
-    .map((d) => ({ key: d, day: dayLabels[d], hours: hoursMap[d] }));
+    .map((d) => ({ key: d, day: t(`day.${d}`), hours: hoursMap[d] }));
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import CategoryArt from './CategoryArt';
 import { categoryOf } from '../../utils/category';
+import { useI18n } from '../../i18n';
 
 /**
  * RestaurantThumb — the restaurant's real photo when one exists, otherwise
@@ -14,6 +15,7 @@ export default function RestaurantThumb({
   restaurant, category, pattern = false, className = '',
   artClassName = '', // e.g. padding that keeps the art clear of overlapping content
 }) {
+  const { t } = useI18n();
   const photo = restaurant?.photos?.find((p) => typeof p === 'string' && p.trim() !== '');
   const [failedSrc, setFailedSrc] = useState(null);
   const showPhoto = photo && failedSrc !== photo;
@@ -23,7 +25,7 @@ export default function RestaurantThumb({
       {showPhoto ? (
         <img
           src={photo}
-          alt={`Ảnh quán ${restaurant.name}`}
+          alt={t('restaurant.photoAlt', { name: restaurant.name })}
           loading="lazy"
           decoding="async"
           onError={() => setFailedSrc(photo)}

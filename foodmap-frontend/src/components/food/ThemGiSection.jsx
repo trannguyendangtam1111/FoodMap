@@ -7,7 +7,8 @@ import ScopeBar from '../location/ScopeBar';
 import AreaPicker from '../location/AreaPicker';
 import useLocationScope from '../../hooks/useLocationScope';
 import useAvailableFoods from '../../hooks/useAvailableFoods';
-import { MODES, inSentence, scopeLabel, scopeSearch } from '../../utils/scope';
+import { MODES, inSentence, scopeDtoLabel, scopeLabel, scopeSearch } from '../../utils/scope';
+import { useI18n } from '../../i18n';
 
 /**
  * "Thèm gì?" — the foods FoodMap knows a restaurant for, in the current scope.
@@ -26,6 +27,7 @@ const SKELETON_COUNT = 8;
 const optionOf = (mode) => (mode === MODES.USER ? 'near' : mode === MODES.AREA ? 'area' : 'centre');
 
 export default function ThemGiSection() {
+  const { t } = useI18n();
   const { scope, selectCityCentre, selectArea, chooseNearMe, fallBackToCityCentre } = useLocationScope();
   const foods = useAvailableFoods(scope);
   const [locating, setLocating] = useState(false);
@@ -44,8 +46,8 @@ export default function ThemGiSection() {
   useEffect(() => {
     if (foods.status !== 'error' || foods.error?.status !== 400 || scope.mode === MODES.CITY_CENTER) return;
     setNotice(scope.mode === MODES.AREA
-      ? 'Khu vực này hiện chưa dùng được, FoodMap đang hiển thị quanh trung tâm TP.HCM.'
-      : 'Không dùng được vị trí này, FoodMap đang hiển thị quanh trung tâm TP.HCM.');
+      ? 'themgi.notice.areaUnavailable'
+      : 'themgi.notice.locationUnusable');   // i18n keys, translated on render
     fallBackToCityCentre();
   }, [foods.status, foods.error, scope.mode, fallBackToCityCentre]);
 
@@ -76,7 +78,7 @@ export default function ThemGiSection() {
     const ok = await chooseNearMe({ signal: controller.signal });
     if (controller.signal.aborted) return;
     setLocating(false);
-    if (!ok) setNotice('Không lấy được vị trí. Bạn có thể chọn khu vực.');
+    if (!ok) setNotice('themgi.notice.locationFailed');
   };
 
   const closePicker = () => {
@@ -92,26 +94,26 @@ export default function ThemGiSection() {
   };
 
   const data = foods.status === 'ready' ? foods.data : null;
-  const label = data?.scope.label ?? scopeLabel(scope);
+  const label = scopeDtoLabel(data?.scope) ?? scopeLabel(scope);
   const phrase = inSentence(label);
   const search = scopeSearch(scope);
   const selected = locating ? 'near' : picking ? 'area' : optionOf(scope.mode);
 
   const status = locating
-    ? 'Đang lấy vị trí của bạn…'
+    ? t('decision.locating')
     : foods.status === 'loading'
-      ? `Đang tải các món ${phrase}…`
+      ? t('themgi.loading', { phrase })
       : foods.status === 'error'
-        ? 'Chưa tải được danh sách món.'
+        ? t('themgi.loadFailed')
         : data.foods.length === 0
-          ? `Chưa có món nào FoodMap biết ${phrase}.`
-          : `${data.foods.length} món có quán ${phrase}.`;
+          ? t('decision.noFood', { phrase })
+          : t('themgi.foodsCount', { count: data.foods.length, phrase });
 
   return (
     <section aria-labelledby="themgi-title" className="mx-auto max-w-6xl px-4 py-8 lg:py-10">
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div className="min-w-0">
-          <h2 id="themgi-title" className="font-display text-h2 text-ink">Thèm gì?</h2>
+          <h2 id="themgi-title" className="font-display text-h2 text-ink">{t('themgi.title')}</h2>
           <p className="mt-1 flex items-center gap-1.5 text-small font-semibold text-brand-800">
             <Icon name="map-pin" size={16} strokeWidth={2} />
             <span>{label}</span>
@@ -125,7 +127,7 @@ export default function ThemGiSection() {
                 className="ml-1 inline-flex min-h-11 items-center rounded-full px-2 text-small font-semibold text-brand-700
                            underline decoration-brand-300 underline-offset-4 hover:text-brand-800"
               >
-                Đổi khu vực
+                {t('themgi.changeArea')}
               </button>
             )}
           </p>
@@ -145,7 +147,7 @@ export default function ThemGiSection() {
       )}
 
       {notice && (
-        <p className="mt-3 rounded-tag bg-warning-tint px-3 py-2 text-small font-medium text-warning-ink">{notice}</p>
+        <p className="mt-3 rounded-tag bg-warning-tint px-3 py-2 text-small font-medium text-warning-ink">{t(notice)}</p>
       )}
 
       <div aria-busy={foods.status === 'loading' || undefined} className="mt-4 min-h-[9.5rem] lg:min-h-[11rem]">
@@ -165,7 +167,7 @@ export default function ThemGiSection() {
         {data && data.foods.length > 0 && (
           <>
             <ul
-              aria-label={`Các món có quán ${phrase}`}
+              aria-label={t('themgi.listLabel', { phrase })}
               className="-mx-4 flex snap-x scroll-px-4 gap-2 overflow-x-auto px-4 pb-2 pt-1
                          sm:mx-0 sm:grid sm:grid-cols-4 sm:gap-3 sm:overflow-visible sm:px-0
                          md:grid-cols-6 lg:grid-cols-8"
@@ -180,11 +182,11 @@ export default function ThemGiSection() {
               ))}
             </ul>
             <p className="mt-3 text-small text-ink-muted">
-              Số quán FoodMap biết có món này (theo tên quán và thực đơn).
+              {t('themgi.countNote')}
             </p>
             {data.unavailableCount > 0 && (
               <p className="mt-1 text-small text-ink-subtle">
-                {data.unavailableCount} món khác chưa có quán {phrase}.
+                {t('themgi.unavailable', { count: data.unavailableCount, phrase })}
               </p>
             )}
           </>
@@ -211,6 +213,7 @@ function ChipSkeletons() {
 }
 
 function LoadError({ error, onRetry }) {
+  const { t } = useI18n();
   const tooFast = error?.status === 429;
   const seconds = tooFast && Number.isFinite(error?.retryAfterSeconds) ? error.retryAfterSeconds : 0;
   const [wait, setWait] = useState(seconds);
@@ -228,31 +231,32 @@ function LoadError({ error, onRetry }) {
   }, [seconds]);
 
   const detail = !tooFast
-    ? 'FoodMap đang gặp chút trục trặc, bạn thử lại nhé.'
+    ? t('themgi.err.server')
     : seconds <= 0
-      ? 'Bạn mở hơi nhanh, đợi một chút rồi thử lại nhé.'   // Retry-After not readable
+      ? t('themgi.err.tooFastMoment')   // Retry-After not readable
       : wait > 0
-        ? `Bạn mở hơi nhanh, đợi ${wait} giây rồi thử lại nhé.`
-        : 'Giờ bạn thử lại được rồi.';
+        ? t('themgi.err.tooFastSeconds', { count: wait })
+        : t('decision.canRetry');
 
   return (
     <div className="flex flex-col items-start gap-3 rounded-card border border-line bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <p className="text-body font-semibold text-ink">Chưa tải được danh sách món.</p>
+        <p className="text-body font-semibold text-ink">{t('themgi.loadFailed')}</p>
         <p className="mt-0.5 text-small text-ink-muted">{detail}</p>
       </div>
-      <Button variant="secondary" onClick={onRetry} disabled={wait > 0}>Thử lại</Button>
+      <Button variant="secondary" onClick={onRetry} disabled={wait > 0}>{t('common.retry')}</Button>
     </div>
   );
 }
 
 function EmptyState({ phrase, showCentre, onCentre, onArea }) {
+  const { t } = useI18n();
   return (
     <div className="flex flex-col items-start gap-3 rounded-card border border-line bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-body text-ink">Chưa có món nào FoodMap biết {phrase}.</p>
+      <p className="text-body text-ink">{t('decision.noFood', { phrase })}</p>
       <div className="flex flex-wrap gap-2">
-        <Button variant="secondary" onClick={onArea}>Chọn khu vực</Button>
-        {showCentre && <Button variant="secondary" onClick={onCentre}>Quanh trung tâm TP.HCM</Button>}
+        <Button variant="secondary" onClick={onArea}>{t('themgi.chooseArea')}</Button>
+        {showCentre && <Button variant="secondary" onClick={onCentre}>{t('scope.cityCentre')}</Button>}
       </div>
     </div>
   );

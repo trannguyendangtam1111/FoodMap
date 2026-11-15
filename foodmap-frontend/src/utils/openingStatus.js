@@ -9,6 +9,8 @@
  * Kept dependency-free on purpose (plain ESM) so it can be unit-tested in Node.
  */
 
+import { t } from '../i18n';
+
 const TIME_ZONE = 'Asia/Ho_Chi_Minh';
 const DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 const MINUTES_PER_DAY = 24 * 60;
@@ -91,7 +93,7 @@ export function openingStatus(restaurantOrHours, now = new Date()) {
   // Still inside last night's range that runs past midnight?
   for (const [open, close] of prev ?? []) {
     if (close <= open && minutes < close) {
-      return { state: 'open', label: 'Đang mở', detail: `đến ${toClock(close)}`, todayKey: day };
+      return { state: 'open', label: t('open.open'), detail: t('open.until', { time: toClock(close) }), todayKey: day };
     }
   }
 
@@ -102,7 +104,7 @@ export function openingStatus(restaurantOrHours, now = new Date()) {
     if (overnight ? minutes >= open : minutes >= open && minutes < close) {
       const allDay = open === 0 && close === MINUTES_PER_DAY;
       return {
-        state: 'open', label: 'Đang mở', detail: allDay ? 'mở cả ngày' : `đến ${toClock(close)}`, todayKey: day,
+        state: 'open', label: t('open.open'), detail: allDay ? t('open.allDay') : t('open.until', { time: toClock(close) }), todayKey: day,
       };
     }
   }
@@ -110,8 +112,8 @@ export function openingStatus(restaurantOrHours, now = new Date()) {
   const nextOpen = today.map(([open]) => open).filter((open) => open > minutes).sort((a, b) => a - b)[0];
   return {
     state: 'closed',
-    label: 'Đã đóng cửa',
-    detail: nextOpen !== undefined ? `mở lúc ${toClock(nextOpen)}` : null,
+    label: t('open.closed'),
+    detail: nextOpen !== undefined ? t('open.opensAt', { time: toClock(nextOpen) }) : null,
     todayKey: day,
   };
 }

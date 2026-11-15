@@ -4,9 +4,11 @@ import { useAuth } from '../hooks/useAuth';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { describeAuthError } from '../utils/authErrors';
+import { useI18n } from '../i18n';
 
 export default function RegisterPage() {
   const { register } = useAuth();
+  const { t } = useI18n();
   const navigate     = useNavigate();
 
   const [form, setForm]           = useState({ displayName: '', email: '', password: '', confirmPassword: '' });
@@ -18,11 +20,11 @@ export default function RegisterPage() {
 
   const validate = () => {
     const next = {};
-    if (!form.displayName.trim())  next.displayName = 'Vui lòng nhập tên hiển thị.';
-    if (!form.email.trim())        next.email = 'Vui lòng nhập email.';
-    else if (!/\S+@\S+\.\S+/.test(form.email)) next.email = 'Email không hợp lệ.';
-    if (form.password.length < 8)  next.password = 'Mật khẩu cần ít nhất 8 ký tự.';
-    if (form.password !== form.confirmPassword) next.confirmPassword = 'Mật khẩu nhập lại không khớp.';
+    if (!form.displayName.trim())  next.displayName = t('auth.err.displayNameRequired');
+    if (!form.email.trim())        next.email = t('auth.err.emailRequired');
+    else if (!/\S+@\S+\.\S+/.test(form.email)) next.email = t('auth.err.emailInvalid');
+    if (form.password.length < 8)  next.password = t('auth.err.passwordMin');
+    if (form.password !== form.confirmPassword) next.confirmPassword = t('auth.err.passwordMismatch');
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -53,40 +55,40 @@ export default function RegisterPage() {
       <Link to="/" className="mb-8 rounded-tag font-display text-4xl font-black text-brand-600">FoodMap</Link>
 
       <div className="w-full max-w-sm rounded-panel border border-line bg-surface p-8 shadow-e1">
-        <h1 className="mb-6 text-h2 text-ink">Tạo tài khoản</h1>
+        <h1 className="mb-6 text-h2 text-ink">{t('auth.createAccount')}</h1>
 
         <form onSubmit={handleSubmit} noValidate className="space-y-4">
           <Input
-            label="Tên hiển thị"
+            label={t('auth.displayName')}
             type="text"
-            placeholder="Nguyễn Văn A"
+            placeholder={t('auth.displayNamePlaceholder')}
             autoComplete="name"
             value={form.displayName}
             onChange={set('displayName')}
             error={errors.displayName}
           />
           <Input
-            label="Email"
+            label={t('auth.email')}
             type="email"
-            placeholder="ten@email.com"
+            placeholder={t('auth.emailPlaceholder')}
             autoComplete="email"
             value={form.email}
             onChange={set('email')}
             error={errors.email}
           />
           <Input
-            label="Mật khẩu"
+            label={t('auth.password')}
             type="password"
-            placeholder="Tối thiểu 8 ký tự"
+            placeholder={t('auth.passwordMinPlaceholder')}
             autoComplete="new-password"
             value={form.password}
             onChange={set('password')}
             error={errors.password}
           />
           <Input
-            label="Nhập lại mật khẩu"
+            label={t('auth.confirmPassword')}
             type="password"
-            placeholder="Nhập lại mật khẩu của bạn"
+            placeholder={t('auth.confirmPasswordPlaceholder')}
             autoComplete="new-password"
             value={form.confirmPassword}
             onChange={set('confirmPassword')}
@@ -98,14 +100,14 @@ export default function RegisterPage() {
           )}
 
           <Button type="submit" isLoading={isLoading} className="w-full mt-2">
-            Tạo tài khoản
+            {t('auth.createAccount')}
           </Button>
         </form>
 
         <p className="mt-6 text-center text-sm text-ink-muted">
-          Đã có tài khoản?{' '}
+          {t('auth.haveAccount')}{' '}
           <Link to="/login" className="rounded-tag font-semibold text-brand-700 hover:text-brand-800">
-            Đăng nhập
+            {t('auth.login')}
           </Link>
         </p>
       </div>

@@ -4,9 +4,11 @@ import { useAuth } from '../hooks/useAuth';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { describeAuthError } from '../utils/authErrors';
+import { useI18n } from '../i18n';
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const { t } = useI18n();
   const navigate  = useNavigate();
   const location  = useLocation();
   // Default destination after login is the map (it used to live at "/")
@@ -21,8 +23,8 @@ export default function LoginPage() {
 
   const validate = () => {
     const next = {};
-    if (!form.email.trim()) next.email = 'Vui lòng nhập email.';
-    if (!form.password)     next.password = 'Vui lòng nhập mật khẩu.';
+    if (!form.email.trim()) next.email = t('auth.err.emailRequired');
+    if (!form.password)     next.password = t('auth.err.passwordRequired');
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -50,20 +52,20 @@ export default function LoginPage() {
       <Link to="/" className="mb-8 rounded-tag font-display text-4xl font-black text-brand-600">FoodMap</Link>
 
       <div className="w-full max-w-sm rounded-panel border border-line bg-surface p-8 shadow-e1">
-        <h1 className="mb-6 text-h2 text-ink">Chào mừng trở lại</h1>
+        <h1 className="mb-6 text-h2 text-ink">{t('auth.welcomeBack')}</h1>
 
         <form onSubmit={handleSubmit} noValidate className="space-y-4">
           <Input
-            label="Email"
+            label={t('auth.email')}
             type="email"
-            placeholder="ten@email.com"
+            placeholder={t('auth.emailPlaceholder')}
             autoComplete="email"
             value={form.email}
             onChange={set('email')}
             error={errors.email}
           />
           <Input
-            label="Mật khẩu"
+            label={t('auth.password')}
             type="password"
             placeholder="••••••••"
             autoComplete="current-password"
@@ -77,14 +79,14 @@ export default function LoginPage() {
           )}
 
           <Button type="submit" isLoading={isLoading} className="w-full mt-2">
-            Đăng nhập
+            {t('auth.login')}
           </Button>
         </form>
 
         <p className="mt-6 text-center text-sm text-ink-muted">
-          Chưa có tài khoản?{' '}
+          {t('auth.noAccount')}{' '}
           <Link to="/register" className="rounded-tag font-semibold text-brand-700 hover:text-brand-800">
-            Đăng ký
+            {t('auth.register')}
           </Link>
         </p>
       </div>

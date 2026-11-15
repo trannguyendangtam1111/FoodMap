@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { useNavigate } from 'react-router-dom';
 import goongjs from '@goongmaps/goong-js';
 import Spinner from '../ui/Spinner';
+import { t, useI18n } from '../../i18n';
 import { MapHoverCard, MapPopupCard } from './MapPopupCard';
 import { glyphHref, toneColor } from './FoodGlyphSprite';
 import { distanceFromUserKm } from '../../utils/ranking';
@@ -85,6 +86,7 @@ const MapView = forwardRef(function MapView({
   onDeselect,
   onViewportChange,
 }, ref) {
+  useI18n();
   const navigate = useNavigate();
 
   const containerRef     = useRef(null);
@@ -266,7 +268,7 @@ const MapView = forwardRef(function MapView({
     }
     const el = document.createElement('div');
     el.className = 'user-location-dot';
-    el.setAttribute('aria-label', 'Vị trí của bạn');
+    el.setAttribute('aria-label', t('mapView.you'));
     userMarkerRef.current = new goongjs.Marker({ element: el })
       .setLngLat([center.lng, center.lat])
       .addTo(map);
@@ -458,7 +460,7 @@ const MapView = forwardRef(function MapView({
           <div className="flex items-center gap-2 rounded-full border border-line bg-surface/90 px-4 py-1.5
                           shadow-e2 backdrop-blur-sm">
             <Spinner size="sm" />
-            <span className="text-label text-ink">Đang tải quán ăn…</span>
+            <span className="text-label text-ink">{t('map.loadingPlaces')}</span>
           </div>
         </div>
       )}

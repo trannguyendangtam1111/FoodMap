@@ -2,6 +2,7 @@ import { useEffect, useId, useRef } from 'react';
 import Button from '../ui/Button';
 import Skeleton from '../ui/Skeleton';
 import useCatalog from '../../hooks/useCatalog';
+import { useI18n } from '../../i18n';
 
 /**
  * AreaPicker — the FoodMap discovery areas, as a labelled list inside an
@@ -14,6 +15,7 @@ import useCatalog from '../../hooks/useCatalog';
  * changes the scope by itself. Escape closes and hands focus back.
  */
 export default function AreaPicker({ id, selectedKey, onSelect, onClose }) {
+  const { t } = useI18n();
   const { status, catalog, retry } = useCatalog({ enabled: true });
   const headingId = useId();
   const listRef = useRef(null);
@@ -34,18 +36,18 @@ export default function AreaPicker({ id, selectedKey, onSelect, onClose }) {
 
   return (
     <div id={id} onKeyDown={onKeyDown} className="mt-3 rounded-card border border-line bg-surface p-3 sm:p-4">
-      <p id={headingId} className="mb-2 text-small font-semibold text-ink">Chọn khu vực</p>
+      <p id={headingId} className="mb-2 text-small font-semibold text-ink">{t('area.choose')}</p>
       {status === 'error' ? (
         <div className="flex flex-wrap items-center gap-3">
-          <p className="text-small text-ink-muted">Chưa tải được danh sách khu vực.</p>
-          <Button variant="secondary" size="sm" onClick={retry}>Thử lại</Button>
+          <p className="text-small text-ink-muted">{t('area.loadFailed')}</p>
+          <Button variant="secondary" size="sm" onClick={retry}>{t('common.retry')}</Button>
         </div>
       ) : status !== 'ready' ? (
         <div className="flex flex-wrap gap-2" aria-hidden="true">
           {Array.from({ length: 6 }, (_, i) => <Skeleton key={i} className="h-11 w-24 rounded-full" />)}
         </div>
       ) : catalog.areas.length === 0 ? (
-        <p className="text-small text-ink-muted">Hiện chưa có khu vực nào để chọn.</p>
+        <p className="text-small text-ink-muted">{t('area.none')}</p>
       ) : (
         <ul ref={listRef} aria-labelledby={headingId} className="flex flex-wrap gap-2">
           {catalog.areas.map((area) => {
@@ -69,9 +71,9 @@ export default function AreaPicker({ id, selectedKey, onSelect, onClose }) {
       )}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
         <p className="text-label font-medium text-ink-subtle">
-          Khu vực là vùng tìm kiếm của FoodMap, không phải ranh giới hành chính.
+          {t('area.note')}
         </p>
-        <Button variant="ghost" size="sm" onClick={onClose}>Đóng</Button>
+        <Button variant="ghost" size="sm" onClick={onClose}>{t('common.close')}</Button>
       </div>
     </div>
   );

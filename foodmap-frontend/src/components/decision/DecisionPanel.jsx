@@ -2,10 +2,11 @@ import { useId, useState } from 'react';
 import TiffinDecision from './TiffinDecision';
 import RollDecision from './RollDecision';
 import useDecisionMode, { DECISION_MODES } from '../../hooks/useDecisionMode';
+import { useI18n } from '../../i18n';
 
 const OPTIONS = [
-  { value: DECISION_MODES.TIFFIN, label: 'Cà mèn' },
-  { value: DECISION_MODES.ROLL, label: 'Roll' },
+  { value: DECISION_MODES.TIFFIN, labelKey: 'decision.mode.tiffin' },
+  { value: DECISION_MODES.ROLL, labelKey: 'decision.mode.roll' },
 ];
 
 /**
@@ -20,6 +21,7 @@ const OPTIONS = [
  * disabled while a decision is running.
  */
 export default function DecisionPanel({ decide, prepare, session }) {
+  const { t } = useI18n();
   const [mode, setMode] = useDecisionMode();
   const [busy, setBusy] = useState(false);
   const name = useId();
@@ -28,7 +30,7 @@ export default function DecisionPanel({ decide, prepare, session }) {
   return (
     <div>
       <fieldset disabled={busy} className="mb-3 min-w-0">
-        <legend className="float-left mr-3 mt-3 text-small font-semibold text-ink-muted">Cách chọn món</legend>
+        <legend className="float-left mr-3 mt-3 text-small font-semibold text-ink-muted">{t('decision.modeLegend')}</legend>
         <div className="inline-flex flex-wrap gap-2">
           {OPTIONS.map((option) => (
             <label key={option.value} className="relative cursor-pointer has-[:disabled]:cursor-not-allowed">
@@ -51,7 +53,7 @@ export default function DecisionPanel({ decide, prepare, session }) {
                            peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2
                            peer-focus-visible:outline-brand-700"
               >
-                {option.label}
+                {t(option.labelKey)}
               </span>
             </label>
           ))}

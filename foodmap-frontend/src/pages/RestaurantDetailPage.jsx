@@ -17,11 +17,13 @@ import { scopeSearch } from '../utils/scope';
 import { formatOpeningHours, formatPrice, formatPriceLevel, formatRating } from '../utils/format';
 import { categoryOf, isKnownCategory } from '../utils/category';
 import { openingStatus } from '../utils/openingStatus';
+import { useI18n } from '../i18n';
 
 // Hero height — shared by the page and its loading skeleton
 const HERO_CLASS = 'h-44 w-full border-b border-line sm:h-60';
 
 export default function RestaurantDetailPage() {
+  const { t } = useI18n();
   const { id } = useParams();
   const [restaurant, setRestaurant] = useState(null);
   const [isLoading, setIsLoading]   = useState(true);
@@ -32,7 +34,7 @@ export default function RestaurantDetailPage() {
     restaurantApi
       .getById(id)
       .then(({ data }) => setRestaurant(data))
-      .catch(() => setError('Không tìm thấy quán này.'))
+      .catch(() => setError('detail.notFound'))   // i18n key
       .finally(() => setIsLoading(false));
   }, [id]);
 
@@ -46,10 +48,10 @@ export default function RestaurantDetailPage() {
         <span className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-brand-700">
           <Icon name="map-pin" size={28} />
         </span>
-        <p className="font-display text-h2 text-ink">{error || 'Không tìm thấy quán này.'}</p>
+        <p className="font-display text-h2 text-ink">{t(error || 'detail.notFound')}</p>
         <Link to="/map" className={buttonClass()}>
           <Icon name="map" size={18} />
-          Về bản đồ
+          {t('detail.backToMap')}
         </Link>
       </div>
     );
@@ -94,7 +96,7 @@ export default function RestaurantDetailPage() {
                 </Chip>
               )}
               {price && (
-                <Chip tone="neutral" aria-label={`Mức giá ${priceLevel} trên 4`}>
+                <Chip tone="neutral" aria-label={t('meta.price', { level: priceLevel })}>
                   {price}
                 </Chip>
               )}
@@ -114,10 +116,10 @@ export default function RestaurantDetailPage() {
             <div className="mt-2 flex items-center gap-2">
               <span className="text-body-lg font-bold tabular-nums text-ink">{formatRating(avgRating)}</span>
               <StarRating value={avgRating} size="md" />
-              <span className="text-small text-ink-muted">({reviewCount} đánh giá)</span>
+              <span className="text-small text-ink-muted">{t('detail.reviewCount', { count: reviewCount })}</span>
             </div>
           ) : (
-            <p className="mt-2 text-small text-ink-muted">Chưa có đánh giá — hãy là người đầu tiên!</p>
+            <p className="mt-2 text-small text-ink-muted">{t('detail.noReviews')}</p>
           )}
 
           {/* Address / contact */}
@@ -157,7 +159,7 @@ export default function RestaurantDetailPage() {
 
         {/* ── Signature dishes ─────────────────────────────────────────── */}
         {signature.length > 0 && (
-          <DetailSection title="Món đặc trưng">
+          <DetailSection title={t('detail.signature')}>
             <div className="grid gap-3 sm:grid-cols-2">
               {signature.map((rf) => (
                 <div
@@ -183,14 +185,14 @@ export default function RestaurantDetailPage() {
 
         {/* ── Full menu ────────────────────────────────────────────────── */}
         {restaurantFoods?.length > 0 && (
-          <DetailSection title="Thực đơn">
+          <DetailSection title={t('detail.menu')}>
             <ul className="-my-1 divide-y divide-line">
               {restaurantFoods.map((rf) => (
                 <li key={rf.id} className="flex items-center justify-between gap-4 py-3">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-body font-medium text-ink">{rf.food.name}</p>
-                      {rf.signature && <Badge variant="brand">Đặc trưng</Badge>}
+                      {rf.signature && <Badge variant="brand">{t('detail.signatureBadge')}</Badge>}
                     </div>
                     {rf.food.description && (
                       <p className="mt-0.5 line-clamp-1 text-small text-ink-muted">{rf.food.description}</p>
@@ -207,7 +209,7 @@ export default function RestaurantDetailPage() {
 
         {/* ── Opening hours ─────────────────────────────────────────────── */}
         {hours.length > 0 && (
-          <DetailSection title="Giờ mở cửa">
+          <DetailSection title={t('detail.hours')}>
             <ul className="-my-1 divide-y divide-line">
               {hours.map(({ key, day, hours: h }) => {
                 const isToday = key === status.todayKey;
@@ -220,7 +222,7 @@ export default function RestaurantDetailPage() {
                   >
                     <span className="flex items-center gap-2 text-ink">
                       {day}
-                      {isToday && <Badge variant="brand">Hôm nay</Badge>}
+                      {isToday && <Badge variant="brand">{t('detail.today')}</Badge>}
                     </span>
                     <span className={`tabular-nums ${isToday ? 'text-ink' : 'text-ink-muted'}`}>{h}</span>
                   </li>
@@ -251,6 +253,7 @@ export default function RestaurantDetailPage() {
 // back to exactly where the user was. Opened directly (shared link, new tab:
 // no in-app history, React Router's "default" location key), it offers the map.
 function DetailBackLink() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { key } = useLocation();
   const className = `-ml-3 inline-flex min-h-11 items-center gap-1 rounded-full px-3 text-small font-semibold
@@ -265,8 +268,8 @@ function DetailBackLink() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-1">
       {key !== 'default'
-        ? <button type="button" onClick={() => navigate(-1)} className={className}>{content('Quay lại')}</button>
-        : <Link to="/map" className={className}>{content('Về bản đồ')}</Link>}
+        ? <button type="button" onClick={() => navigate(-1)} className={className}>{content(t('detail.back'))}</button>
+        : <Link to="/map" className={className}>{content(t('detail.backToMap'))}</Link>}
     </div>
   );
 }
@@ -295,6 +298,7 @@ function ContactRow({ icon, children }) {
  * never coordinates.
  */
 function FoodContext({ foodKeys }) {
+  const { t, lang } = useI18n();
   const keys = Array.isArray(foodKeys) ? foodKeys : [];
   const catalogState = useCatalog({ enabled: keys.length > 0 });
   const { scope } = useLocationScope();
@@ -311,11 +315,11 @@ function FoodContext({ foodKeys }) {
   const search = scopeSearch(scope);
 
   return (
-    <DetailSection title="Quán này có">
+    <DetailSection title={t('detail.foodsHere')}>
       <p className="-mt-2 mb-3 text-small text-ink-muted">
         {from
-          ? `Bạn đến từ món ${from.label.toLocaleLowerCase('vi')} · theo tên quán và thực đơn trên FoodMap.`
-          : 'Theo tên quán và thực đơn trên FoodMap.'}
+          ? t('detail.fromFood', { food: lang === 'vi' ? from.label.toLocaleLowerCase('vi') : from.label })
+          : t('detail.foodsBasis')}
       </p>
       <ul className="flex flex-wrap gap-2">
         {ordered.map((food) => (
@@ -353,8 +357,9 @@ function DetailSection({ title, children }) {
 }
 
 function RestaurantDetailSkeleton() {
+  const { t } = useI18n();
   return (
-    <div aria-busy="true" aria-label="Đang tải thông tin quán">
+    <div aria-busy="true" aria-label={t('detail.loading')}>
       <DetailBackLink />
       <Skeleton className={`${HERO_CLASS} rounded-none`} />
 

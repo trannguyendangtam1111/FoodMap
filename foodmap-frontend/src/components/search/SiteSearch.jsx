@@ -5,7 +5,6 @@ import useLocationScope from '../../hooks/useLocationScope';
 import { scopeSearch } from '../../utils/scope';
 
 export const SEARCH_INPUT_ID = 'site-search';
-export const SEARCH_PLACEHOLDER = 'Tìm món, tìm quán…';
 
 /**
  * SiteSearch — SearchBar outside the map page, food-first (Master
@@ -44,7 +43,6 @@ export default function SiteSearch({ size = 'md', className = '' }) {
     <SearchBar
       foodSource="catalog"
       inputId={SEARCH_INPUT_ID}
-      placeholder={SEARCH_PLACEHOLDER}
       size={size}
       className={className}
       onFoodSelect={openFood}
