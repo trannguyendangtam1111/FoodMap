@@ -1,8 +1,8 @@
 # FoodMap
 
 FoodMap is a food and restaurant discovery app for Ho Chi Minh City, built
-with Java 17, Spring Boot, PostgreSQL/PostGIS, and React. The interface is in
-Vietnamese.
+with Java 17, Spring Boot, PostgreSQL/PostGIS, and React. The interface is
+available in English (default) and Vietnamese.
 
 The main experience is **food-first**:
 
@@ -36,6 +36,10 @@ Users can also search directly, browse available foods, or explore the map.
 - **Authentication and reviews:** registration/login, JWT access tokens, hashed
   rotating refresh tokens with reuse detection, authenticated review submission,
   ownership checks for deletion, and server-maintained rating aggregates.
+- **English / Vietnamese interface:** English by default; the EN/VI switcher in
+  the header changes the language instantly, and the choice persists after a
+  refresh. Restaurant names, dish names, addresses, and reviews stay in their
+  original language.
 
 The decision flow includes empty, error, timeout, and rate-limit states,
 keyboard controls, live announcements, and reduced-motion support. Location
@@ -132,7 +136,7 @@ Edit the copied files before starting. Keep secrets out of version control.
 | `DB_URL` | `jdbc:postgresql://localhost:5434/foodmap_dev` |
 | `DB_USERNAME`, `DB_PASSWORD` | Must match the database initialized by Compose |
 | `SERVER_PORT` | `8082` matches the Vite development proxy |
-| `JWT_SECRET` | Replace with a random secret of at least 32 UTF-8 bytes; used as-is, not Base64-decoded |
+| `JWT_SECRET` | Replace with a random secret of at least 32 UTF-8 bytes, e.g. from `openssl rand -base64 48`; used as-is, not Base64-decoded |
 | `SEED_DEMO_PASSWORD` | Choose an 8-100 character password for dev sample accounts; required when seeding |
 | `GOONG_API_KEY`, `GOONG_MAP_KEY` | Backend placeholders can remain for local snapshot browsing; real keys are needed for their respective Goong operations |
 | `VITE_GOONG_MAP_KEY` | Real map tiles key for the frontend map |
