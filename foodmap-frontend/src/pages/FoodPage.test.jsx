@@ -6,6 +6,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import apiClient from '../api/client';
 import FoodPage from './FoodPage';
+import { setLang } from '../i18n';
 import HomePage from './HomePage';
 import HeroSection from '../components/home/HeroSection';
 import { getLocationState, rememberLocation, resetLocationScope } from '../hooks/useLocationScope';
@@ -556,5 +557,27 @@ describe('restaurant links carry the food (for "Quán này có" on the detail pa
     renderWithProbe();
     fireEvent.click(await screen.findByRole('link', { name: 'Xem quán Phở Hòa Pasteur' }));
     expect(screen.getByTestId('arrived').textContent).toBe('/restaurants/1 {"fromFood":"pho"}');
+  });
+});
+
+describe('EN / VI — a generic food reads in the UI language, a named dish as it is', () => {
+  it('/mon/ca-phe: "Coffee" in English (heading, list title, evidence), the catalog label in Vietnamese', async () => {
+    handlers['/decisions/foods/ca-phe/restaurants'] = () => foodRestaurants([byName(PHO_HOA)], { food: { key: 'ca-phe', label: 'Cà phê' } });
+    act(() => setLang('en'));
+    renderAt('/mon/ca-phe');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Coffee' })).toBeInTheDocument();
+    const list = await screen.findByRole('list', { name: /^Coffee places/ });
+    expect(within(list).getByText('Name suggests Coffee')).toBeInTheDocument();
+    expect(within(list).getByText('Phở Hòa Pasteur')).toBeInTheDocument();           // a restaurant name is never translated
+    expect(calls('/decisions/foods/ca-phe/restaurants')).not.toHaveLength(0);         // the key in the request is unchanged
+    act(() => setLang('vi'));
+    expect(screen.getByRole('heading', { level: 1, name: 'Cà phê' })).toBeInTheDocument();
+    expect(within(screen.getByRole('list', { name: /^Quán cà phê/ })).getByText('Tên quán cho thấy có cà phê')).toBeInTheDocument();
+  });
+
+  it('/mon/pho: a named dish keeps its name in English', async () => {
+    act(() => setLang('en'));
+    renderAt('/mon/pho');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Phở' })).toBeInTheDocument();
   });
 });

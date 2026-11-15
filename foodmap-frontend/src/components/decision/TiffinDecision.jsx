@@ -11,6 +11,7 @@ import { MAX_EXCLUDED_FOODS, foodResultId } from '../../hooks/useFoodDecisionSou
 import { scopeSearchOf } from '../../utils/scope';
 import { describeDecisionError, describeEmpty } from './decisionCopy';
 import { t, useI18n } from '../../i18n';
+import { foodName } from '../../i18n/foodNames';
 
 export { describeDecisionError, describeEmpty };
 
@@ -134,7 +135,7 @@ function announcement(phase, result, empty, error, wait) {
     case PHASE.DECIDING:
       return result ? t('decision.choosingAnother') : t('decision.choosingForYou');
     case PHASE.REVEALED:
-      return t('decision.announce', { food: result.food.label, supply: supplyLine(result) });
+      return t('decision.announce', { food: foodName(result.food), supply: supplyLine(result) });
     case PHASE.EMPTY:
       return describeEmpty(empty);
     case PHASE.ERROR:
@@ -264,7 +265,7 @@ function Result({ phase, result, food, empty, error, wait, busy, restored, headi
             })}
           >
             <Icon name="search" size={18} strokeWidth={2} />
-            {t('decision.findPlaces', { food: lang === 'vi' ? shown.label.toLocaleLowerCase('vi') : shown.label })}
+            {t('decision.findPlaces', { food: lang === 'vi' ? shown.label.toLocaleLowerCase('vi') : foodName(shown) })}
           </Link>
         )}
       </div>

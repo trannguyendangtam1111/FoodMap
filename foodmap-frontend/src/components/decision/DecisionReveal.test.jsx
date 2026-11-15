@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import DecisionReveal from './DecisionReveal';
+import DecisionReveal, { reasonLabel } from './DecisionReveal';
+import { setLang } from '../../i18n';
 import { BANH_MI, BUN_DAU, NYONYA, cityCentreDecision, userDecision } from '../../test/decisionFixtures';
 
 // The restaurant card (V1). The homepage cà mèn now reveals a FOOD (Part 7);
@@ -67,5 +68,70 @@ describe('DecisionReveal — backend result', () => {
     renderCard(cityCentreDecision({ id: 82, name: BUN_DAU.name, avgRating: 0, reviewCount: 0 }, { reasons: [] }));
     expect(card().textContent).not.toMatch(/0,0|★|₫|sao|lượt|Cách bạn|\d\s?k?m(?!\p{L})|Đang mở|Đã đóng|Chưa có đánh giá/u);
     expect(within(card()).queryByRole('list', { name: 'Lý do gợi ý' })).not.toBeInTheDocument();
+  });
+});
+
+// ── EN / VI: reason chips follow the UI language ─────────────────────────────
+// Vietnamese shows the server's labels verbatim (above); English rebuilds them
+// from the stable reason codes and the decision's structured fields.
+
+describe('DecisionReveal — reason chips in English', () => {
+  const chipTexts = () => within(within(card()).getByRole('list', { name: /Why this suggestion|Lý do gợi ý/ }))
+    .getAllByRole('listitem').map((li) => li.textContent);
+
+  it('food page suggestion: AREA and FOOD_NAME in English, switching live back to the server text', () => {
+    act(() => setLang('en'));
+    renderCard(cityCentreDecision(NYONYA, {
+      food: { key: 'bun-bo', label: 'Bún bò' },
+      reasons: [{ code: 'AREA', label: 'Quanh trung tâm TP.HCM' }, { code: 'FOOD_NAME', label: 'Tên quán cho thấy có bún bò' }],
+    }));
+    expect(chipTexts()).toEqual(['Around central HCMC', 'Name suggests Bún bò']);
+    act(() => setLang('vi'));
+    expect(chipTexts()).toEqual(['Quanh trung tâm TP.HCM', 'Tên quán cho thấy có bún bò']);
+  });
+
+  it('AREA names the chosen area; FOOD_MENU keeps the menu dish name as written', () => {
+    act(() => setLang('en'));
+    renderCard(cityCentreDecision(NYONYA, {
+      locationSource: 'AREA', area: { key: 'quan-1', label: 'Quận 1' },
+      reasons: [{ code: 'AREA', label: 'Quanh Quận 1' }, { code: 'FOOD_MENU', label: 'Thực đơn có Bánh Mì Thịt Nướng' }],
+    }));
+    expect(chipTexts()).toEqual(['Around Quận 1', 'Menu has Bánh Mì Thịt Nướng']);
+  });
+
+  it('keeps the server label when the code is unknown or the data to rebuild it is missing', () => {
+    act(() => setLang('en'));
+    renderCard(cityCentreDecision(NYONYA, {
+      reasons: [
+        { code: 'MOOD_MENU', label: 'Có món nước: Bún bò Huế' },
+        { code: 'FOOD_NAME', label: 'Tên quán cho thấy có phở' },        // no `food` on the decision
+        { code: 'FOOD_MENU', label: 'Món lạ' },                         // not the server's template
+      ],
+    }));
+    expect(chipTexts()).toEqual(['Có món nước: Bún bò Huế', 'Tên quán cho thấy có phở', 'Món lạ']);
+  });
+
+  it('DISTANCE and RATING are rebuilt from the measured distance and the restaurant\'s own rating', () => {
+    act(() => setLang('en'));
+    const decision = { restaurant: { avgRating: 4.7, reviewCount: 3 }, distanceMeters: 630 };
+    expect(reasonLabel({ code: 'DISTANCE', label: 'Cách bạn 630 m' }, decision)).toBe('630 m from you');
+    expect(reasonLabel({ code: 'RATING', label: 'Được đánh giá 4,7 sao (3 lượt)' }, decision)).toBe('Rated 4.7 stars (3 reviews)');
+    expect(reasonLabel({ code: 'RATING', label: 'x' }, { restaurant: { avgRating: 5, reviewCount: 1 } })).toBe('Rated 5.0 stars (1 review)');
+    act(() => setLang('vi'));
+    expect(reasonLabel({ code: 'DISTANCE', label: 'Cách bạn 630 m' }, decision)).toBe('Cách bạn 630 m');
+  });
+});
+
+describe('DecisionReveal — FOOD_NAME names the food in the UI language', () => {
+  it('a generic food reads "Coffee" in English; VI keeps the server\'s chip', () => {
+    act(() => setLang('en'));
+    renderCard(cityCentreDecision(NYONYA, {
+      food: { key: 'ca-phe', label: 'Cà phê' },
+      reasons: [{ code: 'FOOD_NAME', label: 'Tên quán cho thấy có cà phê' }],
+    }));
+    const chips = () => within(within(card()).getByRole('list', { name: /Why this suggestion|Lý do gợi ý/ })).getAllByRole('listitem').map((li) => li.textContent);
+    expect(chips()).toEqual(['Name suggests Coffee']);
+    act(() => setLang('vi'));
+    expect(chips()).toEqual(['Tên quán cho thấy có cà phê']);
   });
 });

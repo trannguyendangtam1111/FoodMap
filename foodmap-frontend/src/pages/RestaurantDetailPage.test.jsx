@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import apiClient from '../api/client';
 import RestaurantDetailPage from './RestaurantDetailPage';
+import { setLang } from '../i18n';
 import { BANH_MI } from '../test/decisionFixtures';
 import { resetCatalogCache } from '../hooks/useCatalog';
 import { rememberLocation, resetLocationScope, selectArea } from '../hooks/useLocationScope';
@@ -123,6 +124,19 @@ describe('RestaurantDetailPage — "Quán này có" (the server\'s food classifi
     expect(within(section()).getByText('Theo tên quán và thực đơn trên FoodMap.')).toBeInTheDocument();
     expect(section().querySelector('[data-food-art="bun-bo"]')).toHaveAttribute('aria-hidden', 'true');
     expect(foodLinks().every((a) => /\bmin-h-11\b/.test(a.className))).toBe(true);   // 44 px targets
+  });
+
+  it('EN: a generic food reads in English, a named dish keeps its name; keys, links and VI unchanged', async () => {
+    const coffeeCatalog = () => ({ ...CATALOG, foods: [...CATALOG.foods, { key: 'ca-phe', label: 'Cà phê', kind: 'DRINK', parentCategory: 'coffee', tone: 'taro', discoverable: true, order: 10, artKey: 'ca-phe' }] });
+    serve({ foodKeys: ['ca-phe', 'bun-bo'] }, { catalog: coffeeCatalog });
+    act(() => setLang('en'));
+    renderAt([{ pathname: '/restaurants/4', state: { fromFood: 'ca-phe' } }]);
+    await screen.findByRole('heading', { level: 2, name: 'Dishes here' });
+    const links = () => within(screen.getByRole('heading', { level: 2, name: /Dishes here|Quán này có/ }).closest('section')).getAllByRole('link');
+    expect(links().map((a) => [a.textContent, a.getAttribute('href')])).toEqual([['Coffee', '/mon/ca-phe'], ['Bún bò', '/mon/bun-bo']]);
+    expect(screen.getByText(/^You came from Coffee/)).toBeInTheDocument();
+    act(() => setLang('vi'));
+    expect(links().map((a) => [a.textContent, a.getAttribute('href')])).toEqual([['Cà phê', '/mon/ca-phe'], ['Bún bò', '/mon/bun-bo']]);
   });
 
   it('a food without a food page (classification-only) is not listed', async () => {

@@ -353,6 +353,11 @@ const en = {
   'mapPills.more_other': 'and {count} more dishes',
   'mapView.you': 'Your location',
 
+  // ── Decision reason chips (rebuilt from reason codes) ──
+  'reason.distance': '{distance} from you',
+  'reason.rating_one': 'Rated {rating} stars ({count} review)',
+  'reason.rating_other': 'Rated {rating} stars ({count} reviews)',
+
   // ── end ──
 };
 

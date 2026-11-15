@@ -7,6 +7,7 @@ import { categoryOf, isKnownCategory } from '../../utils/category';
 import { matchesFood } from '../../utils/mapFood';
 import FoodPills from './FoodPills';
 import { useI18n } from '../../i18n';
+import { foodName } from '../../i18n/foodNames';
 
 /*
  * Content for Goong map popups. MapView renders these into the popup's DOM
@@ -66,7 +67,7 @@ export function MapPopupCard({
 
       {place && <p className="mt-2 truncate text-label font-normal text-ink-muted">{place}</p>}
       {chosen && (
-        <p data-food-note className="mt-2 text-small font-semibold text-brand-800">{t('mapPopup.hasFood', { food: chosen.label })}</p>
+        <p data-food-note className="mt-2 text-small font-semibold text-brand-800">{t('mapPopup.hasFood', { food: foodName(chosen) })}</p>
       )}
       <FoodPills foodKeys={restaurant.foodKeys} foods={foods} selectedKey={foodKey} className="mt-2" />
 

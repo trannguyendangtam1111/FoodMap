@@ -3,6 +3,7 @@ import FoodArt from '../art/FoodArt';
 import Skeleton from '../ui/Skeleton';
 import RetryNotice from '../food/RetryNotice';
 import { useI18n } from '../../i18n';
+import { foodName } from '../../i18n/foodNames';
 
 /**
  * The food rail of the map's "Món" mode: the catalog's discoverable foods,
@@ -79,7 +80,7 @@ export default function MapFoodRail({ status, foods, counts, selectedKey, onSele
                 type="button"
                 data-food-chip={food.key}
                 aria-pressed={pressed}
-                aria-label={count > 0 ? t('mapRail.chip', { food: food.label, count }) : t('mapRail.chipNone', { food: food.label })}
+                aria-label={count > 0 ? t('mapRail.chip', { food: foodName(food), count }) : t('mapRail.chipNone', { food: foodName(food) })}
                 onClick={() => onSelect(pressed ? null : food.key)}
                 className={`flex min-h-11 w-[4.25rem] flex-col items-center gap-1 rounded-tile border-2 px-1 py-1
                             text-center transition-colors duration-fast ease-standard
@@ -106,10 +107,10 @@ export default function MapFoodRail({ status, foods, counts, selectedKey, onSele
                   )}
                 </span>
                 <span
-                  className={`w-full truncate text-label font-semibold
+                  className={`w-full truncate text-label font-semibold tracking-tight
                               ${count > 0 || pressed ? 'text-ink' : 'font-medium text-ink-muted'}`}
                 >
-                  {food.label}
+                  {foodName(food)}
                 </span>
               </button>
             </li>

@@ -26,6 +26,7 @@ import { countFoods, foodCountText, matchesFood } from '../utils/mapFood';
 import { scopeSearch } from '../utils/scope';
 import Icon from '../components/ui/Icon';
 import { useI18n } from '../i18n';
+import { foodName } from '../i18n/foodNames';
 
 // Sorting is relative to the map centre (where the user is looking), which is
 // why "Gần nhất" carries a clarifying tooltip.
@@ -394,7 +395,7 @@ export default function MapPage() {
     ? t('map.updatingArea')
     : t('map.inFrame', { count });
 
-  const foodCount = foodKey ? foodCountText(matches.length, selectedFood.label) : null;
+  const foodCount = foodKey ? foodCountText(matches.length, foodName(selectedFood)) : null;
 
   // What the screen reader hears: the settled count only, never "loading" on
   // every pan. Back to the map starts with it already said.
@@ -515,7 +516,7 @@ export default function MapPage() {
                   className="h-10 w-10 flex-shrink-0 rounded-full border border-line"
                 />
                 <div className="min-w-0 flex-1">
-                  <h2 className="truncate text-body font-bold text-ink">{selectedFood.label}</h2>
+                  <h2 className="truncate text-body font-bold text-ink">{foodName(selectedFood)}</h2>
                   <p data-food-count className="text-small text-ink-muted">{foodCount}</p>
                 </div>
               </div>
@@ -525,7 +526,7 @@ export default function MapPage() {
                   className="inline-flex min-h-11 items-center gap-1 text-small font-semibold text-brand-700
                              hover:text-brand-800 hover:underline"
                 >
-                  {t('map.viewFoodPage', { food: selectedFood.label })}
+                  {t('map.viewFoodPage', { food: foodName(selectedFood) })}
                 </Link>
                 <button
                   type="button"
@@ -617,17 +618,17 @@ export default function MapPage() {
                     {matches.length > 0 ? (
                       <section aria-labelledby="map-food-matches" className="space-y-2">
                         <h3 id="map-food-matches" className="px-1 pt-1 text-small font-bold text-ink">
-                          {t('map.hasFood', { food: selectedFood.label, count: matches.length })}
+                          {t('map.hasFood', { food: foodName(selectedFood), count: matches.length })}
                         </h3>
                         {matches.map(renderCard)}
                       </section>
                     ) : !error && (
                       <EmptyMessage
                         icon="utensils"
-                        title={t('map.noFoodInFrame', { food: selectedFood.label })}
+                        title={t('map.noFoodInFrame', { food: foodName(selectedFood) })}
                         actions={[
                           { label: t('map.zoomOut'), onClick: handleZoomOut },
-                          { label: t('map.viewFoodPage', { food: selectedFood.label }), to: foodPageHref },
+                          { label: t('map.viewFoodPage', { food: foodName(selectedFood) }), to: foodPageHref },
                         ]}
                       />
                     )}

@@ -18,6 +18,7 @@ import { formatOpeningHours, formatPrice, formatPriceLevel, formatRating } from 
 import { categoryOf, isKnownCategory } from '../utils/category';
 import { openingStatus } from '../utils/openingStatus';
 import { useI18n } from '../i18n';
+import { foodName } from '../i18n/foodNames';
 
 // Hero height — shared by the page and its loading skeleton
 const HERO_CLASS = 'h-44 w-full border-b border-line sm:h-60';
@@ -318,7 +319,7 @@ function FoodContext({ foodKeys }) {
     <DetailSection title={t('detail.foodsHere')}>
       <p className="-mt-2 mb-3 text-small text-ink-muted">
         {from
-          ? t('detail.fromFood', { food: lang === 'vi' ? from.label.toLocaleLowerCase('vi') : from.label })
+          ? t('detail.fromFood', { food: lang === 'vi' ? from.label.toLocaleLowerCase('vi') : foodName(from) })
           : t('detail.foodsBasis')}
       </p>
       <ul className="flex flex-wrap gap-2">
@@ -338,7 +339,7 @@ function FoodContext({ foodKeys }) {
                 tone={food.tone}
                 className="h-9 w-9 flex-shrink-0 rounded-full border border-line"
               />
-              {food.label}
+              {foodName(food)}
             </Link>
           </li>
         ))}

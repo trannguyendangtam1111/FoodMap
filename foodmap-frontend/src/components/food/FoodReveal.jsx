@@ -3,6 +3,7 @@ import FoodArt from '../art/FoodArt';
 import { countText, radiusText } from './FoodChip';
 import { inSentence, scopeDtoLabel } from '../../utils/scope';
 import { t, useI18n } from '../../i18n';
+import { foodName } from '../../i18n/foodNames';
 
 /**
  * FoodReveal — the FOOD that came out of the cà mèn.
@@ -53,7 +54,7 @@ const FoodReveal = forwardRef(function FoodReveal({ decision, inert = false, ani
           tabIndex={-1}
           className="break-words font-display text-h1 text-ink"
         >
-          {food.label}
+          {foodName(food)}
         </h3>
         <p className="mt-1 text-small text-ink-muted">{supplyLine(decision)}</p>
       </div>

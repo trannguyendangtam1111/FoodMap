@@ -8,7 +8,9 @@ import RestaurantMeta from '../restaurant/RestaurantMeta';
 import DirectionsLink from '../restaurant/DirectionsLink';
 import { categoryOf, isKnownCategory } from '../../utils/category';
 import { formatDistance } from '../../utils/ranking';
-import { t, useI18n } from '../../i18n';
+import { scopeDtoLabel } from '../../utils/scope';
+import { getLang, getLocale, t, useI18n } from '../../i18n';
+import { foodName } from '../../i18n/foodNames';
 
 /**
  * DecisionReveal — the restaurant that came out of the cà mèn.
@@ -57,6 +59,45 @@ export function decisionContext({ locationSource, fallbackLevel, radiusMeters, m
   }
   if (moodMatched === false) return t('decision.ctx.moodRelaxed');
   return null;
+}
+
+// The server's FOOD_MENU label is "Thực đơn có " + the menu's dish name; the
+// dish name is not sent separately, so it is read after this fixed prefix.
+const FOOD_MENU_PREFIX = 'Thực đơn có ';
+
+/**
+ * A reason chip's text in the UI language. Vietnamese shows the server's own
+ * label verbatim; other languages rebuild it from the stable reason code and
+ * the decision's structured fields, and keep the server's label whenever the
+ * code is unknown (e.g. MOOD_*) or the data to rebuild it is missing.
+ */
+export function reasonLabel(reason, decision = {}) {
+  if (getLang() === 'vi') return reason.label;
+  const { restaurant, distanceMeters, locationSource, area, food } = decision;
+  switch (reason.code) {
+    case 'AREA':
+      return scopeDtoLabel({ locationSource, area }) ?? reason.label;
+    case 'DISTANCE':
+      return distanceMeters != null ? t('reason.distance', { distance: formatDistance(distanceMeters / 1000) }) : reason.label;
+    case 'FOOD_NAME':
+      return food?.label ? t('evidence.name', { food: foodName(food) }) : reason.label;
+    case 'FOOD_MENU': {
+      const dish = reason.label.startsWith(FOOD_MENU_PREFIX) ? reason.label.slice(FOOD_MENU_PREFIX.length).trim() : '';
+      return dish ? t('evidence.menu', { dish }) : reason.label;
+    }
+    case 'RATING': {
+      const rating = Number(restaurant?.avgRating);
+      const count = Number(restaurant?.reviewCount);
+      return rating > 0 && count > 0
+        ? t('reason.rating', {
+          rating: rating.toLocaleString(getLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+          count,
+        })
+        : reason.label;
+    }
+    default:
+      return reason.label;
+  }
 }
 
 const DecisionReveal = forwardRef(function DecisionReveal({
@@ -125,7 +166,7 @@ const DecisionReveal = forwardRef(function DecisionReveal({
                   tone="brand"
                   icon={REASON_ICONS[r.code] && <Icon name={REASON_ICONS[r.code]} size={12} strokeWidth={2} />}
                 >
-                  {r.label}
+                  {reasonLabel(r, decision)}
                 </Chip>
               </li>
             ))}

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import apiClient from '../../api/client';
 import SiteSearch, { SEARCH_INPUT_ID } from './SiteSearch';
@@ -7,6 +7,7 @@ import SearchBar from './SearchBar';
 import { resetFoodMatchMemo } from '../../api/catalog.api';
 import { rememberLocation, resetLocationScope, selectArea } from '../../hooks/useLocationScope';
 import { httpError } from '../../test/foodFixtures';
+import { setLang } from '../../i18n';
 
 // Only the HTTP client is faked: the real SearchBar, catalog API, scope store and routes.
 vi.mock('../../api/client', () => ({ default: { get: vi.fn() } }));
@@ -176,5 +177,26 @@ describe('the map page\'s own SearchBar keeps the dish filter', () => {
     expect(onDishSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 7, name: 'Phở Bò Tái' }));
     expect(urls()).toContain('/foods/search');
     expect(urls()).not.toContain('/catalog/foods/match');
+  });
+});
+
+describe('site search — food suggestions in the UI language', () => {
+  it('EN shows the English name of a generic food, VI the catalog label; the query and the key are unchanged', async () => {
+    const base = apiClient.get.getMockImplementation();
+    apiClient.get.mockImplementation(async (url, config) => (url === '/catalog/foods/match' && config?.params?.q === 'cafe'
+      ? { data: { foods: [{ key: 'ca-phe', label: 'Cà phê' }, { key: 'pho', label: 'Phở' }], intent: null } }
+      : base(url, config)));
+    act(() => setLang('en'));
+    renderSearch();
+    type('cafe');
+    const section = (await screen.findByText('Dishes')).closest('section');
+    const names = () => within(section).getAllByRole('button').map((b) => b.querySelector('.block').textContent);
+    expect(names()).toEqual(['Coffee', 'Phở']);
+    act(() => setLang('vi'));
+    expect(names()).toEqual(['Cà phê', 'Phở']);
+    act(() => setLang('en'));
+    fireEvent.click(within(section).getAllByRole('button')[0]);
+    expect(where()).toBe('/mon/ca-phe');
+    expect(apiClient.get.mock.calls.filter(([u]) => u === '/catalog/foods/match').map(([, c]) => c.params.q)).toEqual(['cafe']);
   });
 });

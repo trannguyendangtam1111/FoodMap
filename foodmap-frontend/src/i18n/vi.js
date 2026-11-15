@@ -336,6 +336,10 @@ const vi = {
   'mapPills.more': 'và {count} món khác',
   'mapView.you': 'Vị trí của bạn',
 
+  // ── Decision reason chips (Vietnamese shows the server's label; kept for parity) ──
+  'reason.distance': 'Cách bạn {distance}',
+  'reason.rating': 'Được đánh giá {rating} sao ({count} lượt)',
+
   // ── end ──
 };
 

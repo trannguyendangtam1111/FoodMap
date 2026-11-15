@@ -15,6 +15,7 @@ import { scopeKey, scopeSearchOf } from '../../utils/scope';
 import { DECISION_ANCHOR } from './TiffinDecision';
 import { ROLL_WORDS, describeDecisionError, describeEmpty } from './decisionCopy';
 import { t, useI18n } from '../../i18n';
+import { foodName } from '../../i18n/foodNames';
 
 /**
  * RollDecision — "Ăn gì hôm nay?" presented as Roll (Roll V1 specification).
@@ -275,7 +276,7 @@ function announcement(phase, shown, awaiting, empty, error, wait) {
     case PHASE.OPENING:
       return shown ? t('decision.choosingAnother') : t('decision.choosingForYou');
     case PHASE.REVEALED:
-      return shown ? t('decision.announce', { food: shown.food.label, supply: supplyLine(shown) }) : '';
+      return shown ? t('decision.announce', { food: foodName(shown.food), supply: supplyLine(shown) }) : '';
     case PHASE.EMPTY:
       return describeEmpty(empty);
     case PHASE.ERROR:
@@ -342,7 +343,7 @@ function Result({ phase, result, fresh, empty, error, wait, busy, headingRef, on
             })}
           >
             <Icon name="search" size={18} strokeWidth={2} />
-            {t('decision.findPlaces', { food: lang === 'vi' ? food.label.toLocaleLowerCase('vi') : food.label })}
+            {t('decision.findPlaces', { food: lang === 'vi' ? food.label.toLocaleLowerCase('vi') : foodName(food) })}
           </Link>
         )}
       </div>

@@ -1,6 +1,7 @@
 import { pillFoods } from '../../utils/mapFood';
 import { GlyphIcon } from './FoodGlyphSprite';
 import { useI18n } from '../../i18n';
+import { foodName } from '../../i18n/foodNames';
 
 /**
  * The foods the server matched for a restaurant (its `foodKeys`), as small
@@ -26,7 +27,7 @@ export default function FoodPills({ foodKeys, foods, selectedKey = null, classNa
                       ${food.key === selectedKey ? 'border-brand-400 bg-brand-50' : 'border-line bg-surface-sunken'}`}
         >
           <GlyphIcon food={food} />
-          {food.label}
+          {foodName(food)}
         </li>
       ))}
       {more > 0 && (

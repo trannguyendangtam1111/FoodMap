@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import FoodArt from '../art/FoodArt';
 import { getLocale, t, useI18n } from '../../i18n';
+import { foodName } from '../../i18n/foodNames';
 
 /**
  * One available food in "Thèm gì?": art, the server's label and the real
@@ -36,7 +37,7 @@ export default function FoodChip({ food, href, scopePhrase }) {
   const { t: tr } = useI18n();
   const kindTag = KIND_TAG_KEYS[food.kind] ? tr(KIND_TAG_KEYS[food.kind]) : null;
   const accessibleName = [
-    `${food.label}, ${countText(food.count, food.countCapped)}`,
+    `${foodName(food)}, ${countText(food.count, food.countCapped)}`,
     widened ? tr('food.within', { radius: radiusText(food.radiusMeters) }) : null,
     scopePhrase,
   ].filter(Boolean).join(' ');
@@ -57,7 +58,7 @@ export default function FoodChip({ food, href, scopePhrase }) {
                      group-hover:-translate-y-0.5 group-hover:shadow-e2 lg:h-24 lg:w-24"
         />
         <span className="text-small font-semibold text-ink transition-colors group-hover:text-brand-700">
-          {food.label}
+          {foodName(food)}
         </span>
         <span className="text-label font-medium text-ink-muted">
           {countText(food.count, food.countCapped)}

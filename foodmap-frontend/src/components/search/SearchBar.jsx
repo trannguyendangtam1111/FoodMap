@@ -9,6 +9,7 @@ import Spinner from '../ui/Spinner';
 import Icon from '../ui/Icon';
 import { formatRating } from '../../utils/format';
 import { useI18n } from '../../i18n';
+import { foodName } from '../../i18n/foodNames';
 
 /**
  * SearchBar — real-time autocomplete + full-text search.
@@ -339,7 +340,7 @@ export default function SearchBar({
                             <Icon name="utensils" size={14} strokeWidth={2} />
                           </span>
                           <span className="min-w-0 flex-1">
-                            <span className="block truncate text-body font-medium text-ink">{food.label ?? food.name}</span>
+                            <span className="block truncate text-body font-medium text-ink">{foodSource === 'catalog' ? foodName(food) : (food.label ?? food.name)}</span>
                             {food.cuisine && (
                               <span className="block truncate text-small text-ink-muted">{food.cuisine}</span>
                             )}

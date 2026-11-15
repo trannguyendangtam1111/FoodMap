@@ -87,7 +87,13 @@ describe('server-owned classification (Part 8)', () => {
   it('no app module carries a list of catalog keywords (matching happens on the server)', () => {
     const words = catalogMatchWords();
     expect(words.length).toBeGreaterThan(40);
-    for (const file of files) {
+    // One exemption: i18n/foodNames.js is the English display-name table for
+    // catalog foods. It is looked up by the server's food key and never matched
+    // against text, so English names that are also catalog keywords ("milk tea",
+    // "grill") may appear there (its shape is checked below).
+    const displayNames = (file) => file.replace(/\\/g, '/').endsWith('/src/i18n/foodNames.js');
+    expect(files.some(displayNames)).toBe(true);
+    for (const file of files.filter((f) => !displayNames(f))) {
       const source = readFileSync(file, 'utf8').toLowerCase();
       const quoted = words.filter((w) => source.includes(`'${w}'`) || source.includes(`"${w}"`));
       // a stray word (a type tag, a category label) is not a vocabulary; a list would be many
@@ -100,6 +106,13 @@ describe('server-owned classification (Part 8)', () => {
     expect([...source.matchAll(/^export (?:const|function) (\w+)/gm)].map((m) => m[1]))
       .toEqual(['CATEGORIES', 'categoryOf', 'isKnownCategory']);
     expect(source).toMatch(/restaurant\?\.category/);
+  });
+
+  it('i18n/foodNames.js only names foods by the server\'s key (display, not matching)', () => {
+    const source = readFileSync(resolve(SRC, 'i18n/foodNames.js'), 'utf8');
+    expect([...source.matchAll(/^export (?:const|function) (\w+)/gm)].map((m) => m[1])).toEqual(['foodName']);
+    expect(source).toMatch(/EN_FOOD_NAMES\[food\.key\]/);
+    expect(source).not.toMatch(/\.(includes|indexOf|match|search|test|startsWith|normalize)\(/);
   });
 });
 

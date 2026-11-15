@@ -15,6 +15,7 @@ import useLocationScope from '../hooks/useLocationScope';
 import useFoodRestaurants from '../hooks/useFoodRestaurants';
 import { CITY_CENTRE_SCOPE, MODES, inSentence, scopeDtoLabel, scopeLabel } from '../utils/scope';
 import { t, useI18n } from '../i18n';
+import { foodName } from '../i18n/foodNames';
 
 /**
  * /mon/:foodKey[?area=key | ?near=1] — the food page: one FOOD, then the
@@ -188,7 +189,8 @@ export default function FoodPage() {
   }
 
   // Inside a Vietnamese sentence the food reads in lower case; English keeps the server's label.
-  const foodLower = lang === 'vi' ? food.label.toLocaleLowerCase('vi') : food.label;
+  const name = foodName(food);
+  const foodLower = lang === 'vi' ? name.toLocaleLowerCase('vi') : name;
   const list = data.list;
   const listData = list.status === 'ready' ? list.data : null;
   const label = scopeDtoLabel(listData?.scope) ?? (scope ? scopeLabel(scope) : null);
@@ -226,7 +228,7 @@ export default function FoodPage() {
           className="h-20 w-20 flex-shrink-0 rounded-tile border-2 border-ink shadow-sticker-soft sm:h-24 sm:w-24"
         />
         <div className="min-w-0">
-          <h1 className="break-words font-display text-h1 text-ink">{food.label}</h1>
+          <h1 className="break-words font-display text-h1 text-ink">{name}</h1>
           {label && (
             <p className="mt-1 flex flex-wrap items-center gap-x-1.5 text-small font-semibold text-brand-800">
               <Icon name="map-pin" size={16} strokeWidth={2} />
@@ -319,7 +321,7 @@ export default function FoodPage() {
             <FoodRestaurantSuggestion
               state={data.suggestion}
               foodKey={food.key}
-              foodLabel={food.label}
+              foodLabel={name}
               phrase={phrase}
               shownCount={data.shownCount}
               headingId={ids.suggestion}
@@ -341,7 +343,7 @@ export default function FoodPage() {
                   <FoodRestaurantList
                     items={listData.items}
                     foodKey={food.key}
-                    foodLabel={food.label}
+                    foodLabel={name}
                     labelledBy={ids.list}
                     hasMore={list.hasMore}
                     loadingMore={list.loadingMore}
