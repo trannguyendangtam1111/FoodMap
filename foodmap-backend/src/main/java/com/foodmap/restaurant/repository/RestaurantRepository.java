@@ -356,11 +356,14 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     // QUERY SHAPE:
     //   One parameterised query handles three modes:
     //     1. bbox     — geom && ST_MakeEnvelope(...)          → GIST scan
-    //     2. radius   — ST_DWithin(geom::geography, ...)      → GIST + recheck
+    //     2. radius   — ST_DWithin(CAST(geom AS geography), ...) → per-row filter
+    //                   (a geography predicate cannot use the geometry GIST)
     //     3. nothing  — text/category only                    → GIN + filter
     //   CAST(:param AS ...) IS NULL is the standard idiom for "skip this
     //   predicate when the bind is null" — Postgres elides the disjunct
     //   when it can prove the parameter is null at plan time.
+    //   Every cast is CAST(...) rather than `::`: Hibernate 6.4.4 turns `::`
+    //   in native queries into ':' (see findWithinRadius).
     //
     // RANKING:
     //   distance > popularity > recency, weighted 0.6 / 0.3 / 0.1.
@@ -394,8 +397,8 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
                        r.avg_rating, r.review_count, r.price_level,
                        r.cuisine_type, r.last_synced_at,
                        ST_Distance(
-                           r.geom::geography,
-                           ST_SetSRID(ST_MakePoint(:centerLng, :centerLat), 4326)::geography
+                           CAST(r.geom AS geography),
+                           CAST(ST_SetSRID(ST_MakePoint(:centerLng, :centerLat), 4326) AS geography)
                        ) AS dist_m
                 FROM restaurants r
                 WHERE r.is_active = true
@@ -403,8 +406,8 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
                        OR r.geom && ST_MakeEnvelope(:swLng, :swLat, :neLng, :neLat, 4326))
                   AND (CAST(:radiusMeters AS DOUBLE PRECISION) IS NULL
                        OR ST_DWithin(
-                              r.geom::geography,
-                              ST_SetSRID(ST_MakePoint(:centerLng, :centerLat), 4326)::geography,
+                              CAST(r.geom AS geography),
+                              CAST(ST_SetSRID(ST_MakePoint(:centerLng, :centerLat), 4326) AS geography),
                               CAST(:radiusMeters AS DOUBLE PRECISION)
                           ))
                   AND (CAST(:category AS TEXT) IS NULL
@@ -417,7 +420,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             ) AS inner_q
             ORDER BY (
                 0.6 * (1.0 / (1.0 + dist_m / 1000.0))
-              + 0.3 * (COALESCE(avg_rating, 0)::FLOAT / 5.0)
+              + 0.3 * (CAST(COALESCE(avg_rating, 0) AS FLOAT) / 5.0)
                     * (LN(1 + review_count) / LN(101))
               + 0.1 * GREATEST(0.0, 1.0 - EXTRACT(EPOCH FROM (NOW() - COALESCE(last_synced_at, NOW()))) / (365 * 86400))
             ) DESC
@@ -430,8 +433,8 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
                    OR r.geom && ST_MakeEnvelope(:swLng, :swLat, :neLng, :neLat, 4326))
               AND (CAST(:radiusMeters AS DOUBLE PRECISION) IS NULL
                    OR ST_DWithin(
-                          r.geom::geography,
-                          ST_SetSRID(ST_MakePoint(:centerLng, :centerLat), 4326)::geography,
+                          CAST(r.geom AS geography),
+                          CAST(ST_SetSRID(ST_MakePoint(:centerLng, :centerLat), 4326) AS geography),
                           CAST(:radiusMeters AS DOUBLE PRECISION)
                       ))
               AND (CAST(:category AS TEXT) IS NULL

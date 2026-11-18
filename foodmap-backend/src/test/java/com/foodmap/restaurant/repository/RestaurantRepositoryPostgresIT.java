@@ -2,6 +2,7 @@ package com.foodmap.restaurant.repository;
 
 import com.foodmap.restaurant.domain.Restaurant;
 import com.foodmap.restaurant.dto.AvailabilityCandidateRow;
+import com.foodmap.restaurant.dto.PlaceMarkerProjection;
 import com.foodmap.restaurant.dto.SearchCandidateRow;
 import jakarta.persistence.EntityManager;
 import org.flywaydb.core.Flyway;
@@ -10,6 +11,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.support.JpaRepositoryFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -127,6 +130,33 @@ class RestaurantRepositoryPostgresIT {
         List<Restaurant> rows = repository.findWithinRadius(10.7769, 106.7009, 1000, 20);
 
         assertThat(rows).extracting(Restaurant::getId).containsExactly(centre, inside);
+    }
+
+    @Test
+    void placeSearchRadiusModePagesByDistanceAndCountsOnlyActivePlacesInside() {
+        long centre = insertAtDistance("Centre", 0, true);
+        long near = insertAtDistance("Near", 300, true);
+        long mid = insertAtDistance("Mid", 600, true);
+        insertAtDistance("Outside", 1200, true);
+        insertAtDistance("Inactive", 100, false);
+
+        // Fixtures have no reviews and no sync time, so the ranking reduces to
+        // distance. A full first page makes Spring Data run the countQuery.
+        // Regression: under Hibernate 6.4.4 the `::` casts in both queries
+        // reached PostgreSQL as a single ':' (SQLState 42601).
+        Page<PlaceMarkerProjection> first = repository.searchPlaces(
+            10.7769, 106.7009, null, null, null, null, 1000.0, null, null, PageRequest.of(0, 2));
+
+        assertThat(first.getContent()).extracting(PlaceMarkerProjection::getId).containsExactly(centre, near);
+        assertThat(first.getContent().get(1).getDistanceMeters()).isCloseTo(300, within(0.01));
+        assertThat(first.getTotalElements()).isEqualTo(3);
+        assertThat(first.getTotalPages()).isEqualTo(2);
+
+        Page<PlaceMarkerProjection> second = repository.searchPlaces(
+            10.7769, 106.7009, null, null, null, null, 1000.0, null, null, PageRequest.of(1, 2));
+
+        assertThat(second.getContent()).extracting(PlaceMarkerProjection::getId).containsExactly(mid);
+        assertThat(second.getTotalElements()).isEqualTo(3);
     }
 
     @Test
