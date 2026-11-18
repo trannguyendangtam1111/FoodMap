@@ -1,5 +1,6 @@
 package com.foodmap.restaurant.repository;
 
+import com.foodmap.restaurant.domain.Restaurant;
 import com.foodmap.restaurant.dto.AvailabilityCandidateRow;
 import com.foodmap.restaurant.dto.SearchCandidateRow;
 import jakarta.persistence.EntityManager;
@@ -112,6 +113,20 @@ class RestaurantRepositoryPostgresIT {
         assertThat(rows).extracting(AvailabilityCandidateRow::getId).containsExactly(centre, inside);
         assertThat(rows.get(0).getDistanceMeters()).isCloseTo(0, within(0.01));
         assertThat(rows.get(1).getDistanceMeters()).isCloseTo(999.9, within(0.01));
+    }
+
+    @Test
+    void nearbyQueryReturnsActivePlacesInsideTheRadiusNearestFirst() {
+        long centre = insertAtDistance("Centre", 0, true);
+        long inside = insertAtDistance("Inside", 999.9, true);
+        insertAtDistance("Outside", 1000.1, true);
+        insertAtDistance("Inactive", 500, false);
+
+        // Regression: under Hibernate 6.4.4 a `::geography` cast in this native
+        // query reached PostgreSQL as ':geography' (SQLState 42601).
+        List<Restaurant> rows = repository.findWithinRadius(10.7769, 106.7009, 1000, 20);
+
+        assertThat(rows).extracting(Restaurant::getId).containsExactly(centre, inside);
     }
 
     @Test

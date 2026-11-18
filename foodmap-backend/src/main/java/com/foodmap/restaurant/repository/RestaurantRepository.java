@@ -111,9 +111,14 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     // ── PostGIS radius + KNN: nearby read ────────────────────────────────────
     //
     // ST_DWithin with geography casts gives a true metres-on-the-ellipsoid
-    // filter (no flat-earth approximation). The GIST index still serves the
-    // call because PostGIS recognises geography-on-geometry as a wrapped
-    // form of the same index.
+    // filter (no flat-earth approximation). That predicate cannot use the
+    // geometry GIST index: EXPLAIN shows it as a per-row Filter, never an
+    // Index Cond.
+    //
+    // Casts are written CAST(... AS geography). Hibernate 6.4.4 (this
+    // project's version) rewrites the PostgreSQL `::` cast inside native
+    // queries to a single ':' (HHH-17759, fixed in 6.4.5), so `::geography`
+    // fails with SQLState 42601.
     //
     // `ORDER BY r.geom <-> point` is the KNN operator — fast nearest-neighbour
     // walk over the GIST index, no per-row distance computation needed for
@@ -122,8 +127,8 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
         SELECT * FROM restaurants r
         WHERE r.is_active = true
           AND ST_DWithin(
-                  r.geom::geography,
-                  ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography,
+                  CAST(r.geom AS geography),
+                  CAST(ST_SetSRID(ST_MakePoint(:lng, :lat), 4326) AS geography),
                   :radius
               )
         ORDER BY r.geom <-> ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)
@@ -137,16 +142,14 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     // ── PostGIS radius + KNN: decision candidates ("Ăn gì hôm nay?") ──────────
     //
-    // Read-only candidate source for DecisionService. Differs from
-    // findWithinRadius in two deliberate ways:
-    //  1. Casts are written CAST(... AS geography). Hibernate 6 rewrites the
-    //     PostgreSQL `::` cast inside native queries (it reaches the driver as
-    //     a single ':'), so the `::geography` form fails at runtime.
-    //  2. `r.geom && envelope` is an index-driven pre-filter on the geometry
-    //     GIST index (partial idx_restaurants_geom_active). The geography
-    //     ST_DWithin that follows is the exact metres check — on its own it
-    //     cannot use a geometry index. The caller pads the envelope so it never
-    //     clips a row the exact check would keep.
+    // Read-only candidate source for DecisionService. Uses the same
+    // CAST(... AS geography) form as findWithinRadius (see the Hibernate note
+    // there) and differs from it in one deliberate way:
+    // `r.geom && envelope` is an index-driven pre-filter on the geometry
+    // GIST index (partial idx_restaurants_geom_active). The geography
+    // ST_DWithin that follows is the exact metres check — on its own it
+    // cannot use a geometry index. The caller pads the envelope so it never
+    // clips a row the exact check would keep.
     @Query(value = """
         SELECT * FROM restaurants r
         WHERE r.is_active = true
@@ -170,7 +173,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     // ── Food availability: every active restaurant inside a radius ───────────
     //
     // Same spatial predicate as findDecisionCandidates (index bbox pre-filter
-    // + exact geography ST_DWithin, CAST form for Hibernate 6) but a light
+    // + exact geography ST_DWithin, CAST form for Hibernate 6.4.4) but a light
     // projection with the exact distance, so one query at the widest radius
     // also tells which smaller radius each row falls in. :cap is a safety
     // bound far above current data; callers report when it was hit.
